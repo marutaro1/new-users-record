@@ -78,9 +78,9 @@
               <option
                 v-for="(name, key) in staffDatas"
                 :key="key"
-                :value="name.staffName"
+                :value="name.value.staffName"
               >
-                {{ name.staffName }}
+                {{ name.value.staffName }}
               </option>
             </select>
           </div>
@@ -88,7 +88,19 @@
         <div>
           <label class="col-4 col-form-label">PHS番号:</label>
           <div class="col-4 col-lg-2">
-            <input type="text" v-model="staff.phs" class="form-control" />
+            <select v-model="staff.phs" class="form-select form-select-sm">
+              <option value="">選択してください</option>
+              <option
+                v-for="n in [
+                  5000, 5010, 5020, 5030, 5040, 5050, 5060, 5070, 5080, 5090,
+                  5100, 5101,
+                ]"
+                :value="n"
+                :key="n"
+              >
+                {{ String(n).slice(0, -1) }}
+              </option>
+            </select>
           </div>
         </div>
         <div>
@@ -103,9 +115,9 @@
               <option
                 v-for="(work, key) in dailyWorks"
                 :key="key"
-                :value="work.dailyWorkData"
+                :value="work.value.dailyWorkData"
               >
-                {{ work.dailyWorkData }}
+                {{ work.value.dailyWorkData }}
               </option>
             </select>
           </div>
@@ -158,14 +170,14 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class staffdaywork extends Mixins(MixinLogger) {
-  staffDatas = {}; //staffのデータを格納するオブジェクト
+  staffDatas: { [key: string]: any } = {}; //staffのデータを格納するオブジェクト
   dailyWorkData = {
     //新規業務に入力した値を格納する値
     week: "",
@@ -174,7 +186,7 @@ export default class staffdaywork extends Mixins(MixinLogger) {
   weekData = ""; //曜日のデータを入れる値
   dailyWorks = {}; //曜日ごとに登録した業務データを入れるオブジェクト
   departmentWorks = ""; //何の部署に所属しているの選択肢あてはめる値
-  dailyWorkAllData = {}; //staffと業務を書き出し当路kすいたすべてのデータを格納するオブジェクト
+  dailyWorkAllData: { [key: string]: any } = {}; //staffと業務を書き出し当路kすいたすべてのデータを格納するオブジェクト
   staffCompleteWorkCheck = {};
   limit = 10;
   today =
@@ -225,14 +237,16 @@ export default class staffdaywork extends Mixins(MixinLogger) {
       .doc("staff")
       .collection(this.departmentWorks)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.staffDatas = obj;
         if (this.departmentWorks !== "studentSupport") {
           this.staffOfficialPosition =
-            this.staffDatas[this.staffKey].officialPosition;
+            this.staffDatas[this.staffKey].value.officialPosition;
         } else {
           this.staffOfficialPosition = "leader";
         }
@@ -260,9 +274,11 @@ export default class staffdaywork extends Mixins(MixinLogger) {
       .doc("dailyWork-" + this.departmentWorks)
       .collection(this.weekData)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.dailyWorks = obj;
       });
@@ -296,38 +312,50 @@ export default class staffdaywork extends Mixins(MixinLogger) {
       .doc(this.today + "completeWork")
       .collection("complete")
       .onSnapshot((querySnapshot) => {
-        var obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.staffCompleteWorkCheck = obj; //完了業務をstaffCompleteworkCheckに入れ込む
-        console.log(this.staffCompleteWorkCheck);
       });
     firestore
       .collection("staffs")
       .doc("staff")
       .collection("daily-work-" + this.departmentWorks)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
           if (String(doc.id) !== String(this.today)) {
             return;
           }
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.dailyWorkAllData = obj; //addAllDailyWorkに保存したデータを、日付ごとに取得し、その中で日付が選択した日付と合致するもののみをdailyWorkAllData(からのオブジェクト)に入れ込む
         if (this.staffCompleteWorkCheck !== {}) {
           return;
         } //先ほどのstaffCompleteWorkCheckが{}の場合は、空のworkCheckなどの配列をDBに登録する
-        var i = 0;
-        while (i < Number(obj[this.today].checkStaffsPost.length)) {
+        console.log(
+          this.dailyWorkAllData[this.today].value.checkStaffsPost.length
+        );
+        let i = 0;
+        while (
+          i <
+          Number(this.dailyWorkAllData[this.today].value.checkStaffsPost.length)
+        ) {
           firestore
             .collection("staffs")
             .doc("staff")
             .collection("daily-work-" + this.departmentWorks)
             .doc(this.today + "completeWork")
             .collection("complete")
-            .doc(obj[this.today].checkStaffsPost[i].staffName)
+            .doc(
+              this.dailyWorkAllData[this.today].value.checkStaffsPost[i]
+                .staffName
+            )
             .set({
               workCheck: [""],
               additionalWorkCheck: ["", "", ""],
@@ -346,35 +374,47 @@ export default class staffdaywork extends Mixins(MixinLogger) {
       .doc(this.today + "completeWork")
       .collection("complete")
       .onSnapshot((querySnapshot) => {
-        var obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.staffCompleteWorkCheck = obj; //完了業務をstaffCompleteworkCheckに入れ込む
-        console.log(this.staffCompleteWorkCheck);
       });
     firestore
       .collection("staffs")
       .doc("staff")
       .collection("daily-work-" + this.departmentWorks)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
           if (String(doc.id) !== String(this.today)) {
             return;
           }
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.dailyWorkAllData = obj; //addAllDailyWorkに保存したデータを、日付ごとに取得し、その中で日付が選択した日付と合致するもののみをdailyWorkAllData(からのオブジェクト)に入れ込む
-        var i = 0;
-        while (i < Number(obj[this.today].checkStaffsPost.length)) {
+        let i = 0;
+        console.log(
+          Number(this.dailyWorkAllData[this.today].value.checkStaffsPost.length)
+        );
+        while (
+          i <
+          Number(this.dailyWorkAllData[this.today].value.checkStaffsPost.length)
+        ) {
           firestore
             .collection("staffs")
             .doc("staff")
             .collection("daily-work-" + this.departmentWorks)
             .doc(this.today + "completeWork")
             .collection("complete")
-            .doc(obj[this.today].checkStaffsPost[i].staffName)
+            .doc(
+              this.dailyWorkAllData[this.today].value.checkStaffsPost[i]
+                .staffName
+            )
             .set({
               workCheck: [""],
               additionalWorkCheck: ["", "", ""],
@@ -393,7 +433,7 @@ export default class staffdaywork extends Mixins(MixinLogger) {
     //登録するためのstaffのデータを追加するためのメソッド
     this.checkStaffsPost.push(this.independentObject());
   }
-  removeStaffData(target) {
+  removeStaffData(target: number) {
     //addStaffDataで追加したデータを削除するためのメソッド
     this.checkStaffsPost.splice(target, 1);
   }

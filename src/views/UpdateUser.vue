@@ -41,12 +41,11 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class updateuser extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
@@ -67,7 +66,7 @@ export default class updateuser extends Mixins(MixinLogger) {
         Floor: parseInt(String(Number(this.updateNumber) / 100)) + "F",
       })
       .then(() => {
-        console.log("登録しました。");
+        alert.log("登録しました。");
         this.$router.push(
           "/users/user/" +
             Number(this.updateNumber + this.updateRoomCheck) +

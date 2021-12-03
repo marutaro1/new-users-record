@@ -1,7 +1,6 @@
 <template>
   <div @mousemove.once="getUserRecord(dayData)" class="mt-2">
     <h4>記録</h4>
-
     <div>
       <label class="col-4 col-form-label mb-1">新規記録入力:</label>
       <div class="col-8 col-lg-3 mb-3">
@@ -54,7 +53,7 @@
       <button @click="getMonthsRecord" class="btn btn-primary px-1">
         {{ dayKeywordFirst }}-{{ dayKeywordSecond }}分表示
       </button>
-      <button class="btn btn-primary px-1 mx-1">クリア</button>
+      <button class="btn btn-primary px-1 mx-2">クリア</button>
     </div>
     <hr />
     <div>
@@ -78,30 +77,32 @@
           class="form-control"
         />
         <datalist id="record">
-          <option v-for="n in recordArray" :key="n">{{ n.record }}</option>
+          <option v-for="n in recordArray" :key="n">
+            {{ n.value.record }}
+          </option>
         </datalist>
       </div>
 
       <div class="scroll">
         <div v-for="userRecord in recordArray" :key="userRecord.recordID">
-          <p>日付: {{ userRecord.day }}</p>
-          <p>{{ userRecord.record }}</p>
-          <p>登録者: {{ userRecord.staffName }}</p>
+          <p>日付: {{ userRecord.value.day }}</p>
+          <p class="space">{{ userRecord.value.record }}</p>
+          <p>登録者: {{ userRecord.value.staffName }}</p>
           <button
-            @click="updateUserRecord(userRecord.recordID)"
+            @click="updateUserRecord(userRecord.value.recordID)"
             class="col-2 col-lg-1 btn btn-primary px-0"
           >
             更新
           </button>
           <button
-            @click="deleteUserRecord(userRecord.recordID)"
-            class="col-2 col-lg-1 btn btn-primary px-0 mx-1"
+            @click="deleteUserRecord(userRecord.value.recordID)"
+            class="col-2 col-lg-1 btn btn-primary px-0 mx-2"
           >
             削除
           </button>
           <button
-            @click="addArchives(userRecord.record)"
-            class="col-5 col-lg-2 btn btn-primary px-0 mx-1"
+            @click="addArchives(userRecord.value.record)"
+            class="col-5 col-lg-2 btn btn-primary px-0"
           >
             記録まとめへ追加
           </button>
@@ -139,12 +140,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class records extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
@@ -160,8 +161,9 @@ export default class records extends Mixins(MixinLogger) {
   get serchRecords() {
     const userRecords = [];
     for (let i in this.userRecordObj) {
+      let keywordData: string = this.keyword;
       let recordData = this.userRecordObj[i];
-      if (recordData.record.indexOf(this.keyword) !== -1) {
+      if (recordData.value.record.indexOf(keywordData) !== -1) {
         userRecords.push(recordData);
       }
     }
@@ -170,14 +172,28 @@ export default class records extends Mixins(MixinLogger) {
 
   get sortRecords() {
     //日付順に並び替える
-    return this.serchRecords.slice().sort((a, b) => {
-      return Number(new Date(a.day)) - Number(new Date(b.day));
-    });
+    return this.serchRecords
+      .slice()
+      .sort((a: any | string, b: any | string) => {
+        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
+      });
   }
 
   get reverseSortRecords() {
     //日付逆転追加
     return this.sortRecords.slice().reverse();
+  }
+
+  dayDataValue = "";
+
+  dayDataSet() {
+    const i = this.recordArray[0].value.day;
+    if (i.slice(0, 10) === this.day.slice(0, 10)) {
+      this.dayDataValue = i.slice(0, 10);
+    } else if (Number(i.slice(5, 7)) < Number(this.day.slice(5, 7))) {
+      this.dayDataValue = this.day.slice(0, 10);
+    }
+    console.log(this.dayDataValue);
   }
 
   addUserRecord() {
@@ -194,13 +210,40 @@ export default class records extends Mixins(MixinLogger) {
         staffName: this.displayStaffName,
       })
       .then(() => {
-        this.day = "";
-        this.record = "";
-        this.uidCreate();
+        //record登録時、userに最新record登録日数を入れる
+        //this.dayDataSet();
+
+        const i = this.recordArray[0].value.day;
+        console.log(i);
+        if (i.slice(0, 10) === this.today) {
+          this.dayDataValue = i.slice(0, 10);
+
+          firestore
+            .collection("users")
+            .doc(this.userID)
+            .update({
+              checkRecordDay: this.dayDataValue,
+            })
+            .then(() => {
+              this.day =
+                new Date().getFullYear() +
+                "-" +
+                ("00" + (new Date().getMonth() + 1)).slice(-2) +
+                "-" +
+                ("00" + new Date().getDate()).slice(-2) +
+                "T" +
+                ("00" + new Date().getHours()).slice(-2) +
+                ":" +
+                "00"; //入力した日付を格納する値
+
+              this.record = "";
+              this.uidCreate();
+            });
+        }
       });
   }
 
-  updateUserRecord(uid) {
+  updateUserRecord(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)
@@ -214,22 +257,48 @@ export default class records extends Mixins(MixinLogger) {
         staffName: this.displayStaffName,
       })
       .then(() => {
-        this.updateDay = "";
-        this.updateRecord = "";
-        this.uidCreate();
+        const i = this.recordArray[0].value.day;
+        if (i.slice(0, 10) === this.today) {
+          this.dayDataValue = i.slice(0, 10);
+          firestore
+            .collection("users")
+            .doc(this.userID)
+            .update({
+              checkRecordDay: this.dayDataValue,
+            })
+            .then(() => {
+              this.updateDay = "";
+              this.updateRecord = "";
+              this.uidCreate();
+            });
+        }
+        console.log(this.dayDataValue);
       });
   }
 
-  deleteUserRecord(uid) {
+  deleteUserRecord(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)
       .collection("user-record")
       .doc(String(uid))
-      .delete();
+      .delete()
+      .then(() => {
+        if (this.recordArray[0]) {
+          //recordがある場合にはrecordのdayが一番新しいものをcheckRecordDayに入れ込む
+          this.dayDataValue = this.recordArray[0].value.day.slice(0, 10);
+        } else {
+          //recordがない場合には、空の文字列をcheckRecordDayに入れ込む
+          this.dayDataValue = "";
+        }
+        alert("削除しました");
+        firestore.collection("users").doc(this.userID).update({
+          checkRecordDay: this.dayDataValue,
+        });
+      });
   }
 
-  getUserRecord(dayValue) {
+  getUserRecord(dayValue: string) {
     const startDay = dayValue + "-01";
     const endDay = dayValue + "-31";
     firestore
@@ -240,9 +309,11 @@ export default class records extends Mixins(MixinLogger) {
       .where("day", "<=", endDay)
       .limit(150)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.userRecordObj = obj;
       });
@@ -256,20 +327,22 @@ export default class records extends Mixins(MixinLogger) {
       .where("searchDay", ">=", this.dayKeywordFirst)
       .where("searchDay", "<=", this.dayKeywordSecond)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.userRecordObj = obj;
       });
   }
 
-  addArchives(record) {
+  addArchives(record: string) {
     firestore
       .collection("archives")
       .doc(this.today)
       .collection("archive")
-      .doc(this.id)
+      .doc(String(this.id))
       .set({
         archive: record,
         userName: this.userName,

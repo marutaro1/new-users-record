@@ -16,7 +16,7 @@
     </div>
 
     <label class="col-5 col-form-label">フロア検索: </label>
-    <div class="col-3 col-lg-2">
+    <div class="col-6 col-lg-2">
       <select v-model="floorKeyword" class="form-select form-select-sm">
         <option value="">選択してください</option>
         <option
@@ -53,6 +53,17 @@
         <option value="要介護">要介護</option>
       </select>
     </div>
+
+    <div>
+      <div v-if="!changeValue">
+        <button @click="todayNotRegisteredRecord" class="btn btn-warning mt-2">
+          {{ today }} 記録未登録者
+        </button>
+      </div>
+      <div v-else>
+        <button @click="getUsers" class="btn btn-primary mt-2">戻る</button>
+      </div>
+    </div>
     <hr />
 
     <div class="scroll-user">
@@ -66,7 +77,9 @@
           </p>
           <p>部屋番号: {{ parseInt(user.value.number / 10) }}</p>
           <p>要介護度: {{ user.value.careLevel }}</p>
-          <p>最終記録登録日: {{ user.value.checkRecordDay }}</p>
+          <p>{{ today }}:記録登録</p>
+          <div v-if="user.value.checkRecordDay === this.today">○</div>
+          <div v-else>✖︎</div>
           <hr />
         </div>
       </div>
@@ -101,12 +114,12 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class users extends Mixins(MixinLogger) {
   floorKeyword = "";
   serchCareLevelKeyword = "";
@@ -135,6 +148,22 @@ export default class users extends Mixins(MixinLogger) {
     return this.serchUsers.slice().sort((a, b) => {
       return Number(a.value.number) - Number(b.value.number);
     });
+  }
+
+  todayNotRegisteredRecord() {
+    this.changeValue = true;
+    firestore
+      .collection("users")
+      .where("checkRecordDay", "not-in", [this.today])
+      .onSnapshot((querySnapshot) => {
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
+        querySnapshot.forEach((doc) => {
+          obj[doc.id] = { value: doc.data() };
+        });
+        this.users = obj;
+      });
   }
 }
 </script>

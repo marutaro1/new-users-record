@@ -38,7 +38,7 @@
         class="form-control"
       />
       <datalist id="manuel">
-        <option v-for="n in manuelArray" :key="n">{{ n.manuel }}</option>
+        <option v-for="n in manuelArray" :key="n">{{ n.value.manuel }}</option>
         /
       </datalist>
     </div>
@@ -46,16 +46,16 @@
     <div class="scroll">
       <div v-for="(manuel, key) in manuelArray" :key="key">
         <!-- titleの値は予測変換位でないが、検索はできる -->
-        <p>タイトル: {{ manuel.manuelTitle }}</p>
-        <p>{{ manuel.manuel }}</p>
+        <p>タイトル: {{ manuel.value.manuelTitle }}</p>
+        <p class="space">{{ manuel.value.manuel }}</p>
         <button
-          @click="updateManuelData(manuel.manuelID)"
+          @click="updateManuelData(manuel.value.manuelID)"
           class="btn btn-primary px-0 col-2 col-lg-1"
         >
           更新
         </button>
         <button
-          @click="deleteManuelData(manuel.manuelID)"
+          @click="deleteManuelData(manuel.value.manuelID)"
           class="btn btn-primary px-0 col-2 col-lg-1 mx-2"
         >
           削除
@@ -93,12 +93,12 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class manuel extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
@@ -108,13 +108,13 @@ export default class manuel extends Mixins(MixinLogger) {
     return this.arrayData;
   }
 
-  get serchManuel() {
-    let manuels = [];
+  get serchManuel(): string[] {
+    let manuels = [] as string[];
     for (let i in this.manuelObj) {
       let manuelData = this.manuelObj[i];
       if (
-        manuelData.manuelTitle.indexOf(this.keyword) !== -1 ||
-        manuelData.manuel.indexOf(this.keyword) !== -1
+        manuelData.value.manuelTitle.indexOf(this.keyword) !== -1 ||
+        manuelData.value.manuel.indexOf(this.keyword) !== -1
       ) {
         manuels.push(manuelData);
       }
@@ -140,7 +140,7 @@ export default class manuel extends Mixins(MixinLogger) {
       });
   }
 
-  updateManuelData(uid) {
+  updateManuelData(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)
@@ -157,7 +157,7 @@ export default class manuel extends Mixins(MixinLogger) {
       });
   }
 
-  deleteManueldata(uid) {
+  deleteManueldata(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)
@@ -172,9 +172,11 @@ export default class manuel extends Mixins(MixinLogger) {
       .doc(this.userID)
       .collection("manuel")
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.manuelObj = obj;
       });

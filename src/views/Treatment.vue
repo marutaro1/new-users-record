@@ -34,9 +34,9 @@
             <option
               v-for="(newTreatment, key) in newTreatmentObj"
               :key="key"
-              :value="newTreatment.treatmentID"
+              :value="newTreatment.value.treatmentID"
             >
-              {{ newTreatment.treatment }}
+              {{ newTreatment.value.treatment }}
             </option>
           </select>
         </div>
@@ -48,7 +48,7 @@
             class="form-control"
           ></textarea>
         </div>
-        {{ updateTreatmentText }}
+
         <button
           @click="updateTreatmentData(updateTreatmentID)"
           class="btn btn-primary"
@@ -84,9 +84,9 @@
           <option
             v-for="(newTreatment, key) in newTreatmentObj"
             :key="key"
-            :value="newTreatment.treatment"
+            :value="newTreatment.value.treatment"
           >
-            {{ newTreatment.treatment }}
+            {{ newTreatment.value.treatment }}
           </option>
         </select>
       </div>
@@ -111,9 +111,15 @@
 
     <div class="scroll">
       <div v-for="(dayTreatment, key) in treatmentArray" :key="key">
-        <p>日付: {{ dayTreatment.day }}</p>
-        <p>{{ dayTreatment.treatment }}</p>
-        <p>登録者: {{ dayTreatment.staffName }}</p>
+        <p>日付: {{ dayTreatment.value.day }}</p>
+        <p class="space">{{ dayTreatment.value.treatment }}</p>
+        <p>登録者: {{ dayTreatment.value.staffName }}</p>
+        <button
+          @click="deleteDayTreatmentData(dayTreatment.value.treatmentID)"
+          class="btn btn-primary"
+        >
+          削除
+        </button>
         <hr />
       </div>
     </div>
@@ -147,12 +153,12 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class treatment extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
@@ -161,7 +167,7 @@ export default class treatment extends Mixins(MixinLogger) {
   newTreatmentObj = {}; //新規処置入力で登録した値を格納するオブジェクト
 
   dayTreatment = ""; //selectした処置を入れ込むための値
-  dayTreatmentObj = {}; //登録した日付と処置を格納する値
+  dayTreatmentObj: { [key: string]: any } = {}; //登録した日付と処置を格納する値
 
   updateTreatmentID = ""; //処置内容更新のための値
   updateTreatmentText = ""; //処置内容更新のための値
@@ -179,10 +185,10 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   get serchTreatment() {
-    let dayTreatments = [];
+    let dayTreatments = [] as string[];
     for (let i in this.dayTreatmentObj) {
       let treatmentData = this.dayTreatmentObj[i];
-      if (treatmentData.treatment.indexOf(this.keyword) !== -1) {
+      if (treatmentData.value.treatment.indexOf(this.keyword) !== -1) {
         dayTreatments.push(treatmentData);
       }
     }
@@ -191,9 +197,11 @@ export default class treatment extends Mixins(MixinLogger) {
 
   get sortTreatment() {
     //日付順に並び替える
-    return this.serchTreatment.slice().sort((a, b) => {
-      return Number(new Date(a.day)) - Number(new Date(b.day));
-    });
+    return this.serchTreatment
+      .slice()
+      .sort((a: any | string, b: any | string) => {
+        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
+      });
   }
 
   get reverseSortTreatment() {
@@ -218,9 +226,11 @@ export default class treatment extends Mixins(MixinLogger) {
 
   getNewTreatmentData() {
     firestore.collection("treatment").onSnapshot((querySnapshot) => {
-      const obj = {};
+      const obj: {
+        [key: string]: { value: firebase.firestore.DocumentData };
+      } = {};
       querySnapshot.forEach((doc) => {
-        obj[doc.id] = doc.data();
+        obj[doc.id] = { value: doc.data() };
       });
       this.newTreatmentObj = obj;
     });
@@ -236,11 +246,22 @@ export default class treatment extends Mixins(MixinLogger) {
         treatment: this.dayTreatment,
         day: this.day,
         staffName: this.displayStaffName,
+        treatmentID: this.$_uid,
       })
       .then(() => {
         this.dayTreatment = "";
         this.uidCreate();
       });
+  }
+
+  deleteDayTreatmentData(treatmentID: string) {
+    firestore
+      .collection("users")
+      .doc(this.userID)
+      .collection("treatment")
+      .doc(String(treatmentID))
+      .delete();
+    alert("削除しました");
   }
 
   getDayTreatment() {
@@ -249,18 +270,20 @@ export default class treatment extends Mixins(MixinLogger) {
       .doc(this.userID)
       .collection("treatment")
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.dayTreatmentObj = obj;
       });
   }
 
-  deleteTreatmentData(uID) {
+  deleteTreatmentData(uid: string) {
     firestore
       .collection("treatment")
-      .doc(String(uID))
+      .doc(String(uid))
       .delete()
       .then(() => {
         this.updateTreatmentID = "";
@@ -269,10 +292,10 @@ export default class treatment extends Mixins(MixinLogger) {
       });
   }
 
-  updateTreatmentData(uID) {
+  updateTreatmentData(uid: string) {
     firestore
       .collection("treatment")
-      .doc(String(uID))
+      .doc(String(uid))
       .update({
         treatment: this.updateTreatmentText,
         staffName: this.displayStaffName,

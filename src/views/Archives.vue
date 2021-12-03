@@ -48,25 +48,25 @@
             parseInt(key / 10)
           }}</router-link>
         </p>
-        <p class="mb-0">名前: {{ archive.userName }}</p>
+        <p class="mb-0">名前: {{ archive.value.userName }}</p>
 
         <button
-          @click="copyArchivetTextarea(archive.archive)"
+          @click="copyArchivetTextarea(archive.value.archive)"
           class="btn btn-warning rounded-circle p-0 px-1 mb-1"
         >
           ✔︎
         </button>
-        <p>記録: {{ archive.archive }}</p>
+        <p class="space">記録: {{ archive.value.archive }}</p>
 
         <button
-          @click="updateArchiveData(key, archive.addArchiveDay)"
+          @click="updateArchiveData(key, archive.value.addArchiveDay)"
           class="btn btn-primary"
         >
           更新
         </button>
         <button
-          @click="deleteArchiveData(key, archive.addArchiveDay)"
-          class="btn btn-primary mx-1"
+          @click="deleteArchiveData(key, archive.value.addArchiveDay)"
+          class="btn btn-primary mx-2"
         >
           削除
         </button>
@@ -74,7 +74,10 @@
         <div class="mt-2">
           <label class="col-4 col-form-label">メモ:</label>
           <div class="col-7 col-lg-4">
-            <textarea v-model="archive.memo" class="form-control"></textarea>
+            <textarea
+              v-model="archive.value.memo"
+              class="form-control"
+            ></textarea>
           </div>
 
           <div class="mt-2">
@@ -83,9 +86,9 @@
                 addArchiveMemo(
                   today,
                   key,
-                  archive.userName,
-                  archive.memo,
-                  archive.archive
+                  archive.value.userName,
+                  archive.value.memo,
+                  archive.value.archive
                 )
               "
               class="btn btn-primary"
@@ -94,7 +97,7 @@
             </button>
             <button
               @click="deleteArchiveMemo(today, key)"
-              class="btn btn-primary mx-1"
+              class="btn btn-primary mx-2"
             >
               メモ削除
             </button>
@@ -104,8 +107,8 @@
             :key="memoKey"
             class="mt-1"
           >
-            <div v-if="memo.number === key">
-              <p>・{{ memo.memo }}</p>
+            <div v-if="memo.value.number === key">
+              <p class="space">・{{ memo.value.memo }}</p>
             </div>
           </div>
         </div>
@@ -115,45 +118,44 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins } from "vue-property-decorator";
 
-@Component
 export default class archives extends Mixins(MixinLogger) {
   archiveDay = ""; //日付を指定し過去の記録を呼び出す際に使用する値
 
   dayPreview = ""; //表示しているarchivesの日付を格納する値
   archivesMemo = {};
-  archivesKeyArray = [];
+  archivesKeyArray: string[] = [];
 
-  getArchives(day) {
+  getArchives(day: string) {
     firestore
       .collection("archives")
       .doc(day)
       .collection("archive")
       .orderBy("userNumber")
       .onSnapshot((querySnapshot) => {
-        const obj = {};
-        let array = [];
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
+        let array!: string[];
+        array = [];
         querySnapshot.forEach((doc) => {
           array = [...array, doc.id];
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
           console.log(doc.id);
         });
         this.archivesObj = obj;
-        console.log(array);
         this.archivesKeyArray = array;
-        console.log(this.archivesKeyArray);
-        console.log(this.archivesObj);
-        console.log(this.archivesKeyArray.length);
         this.dayPreview = day;
         this.getArchiveMemo(this.today);
       });
   }
 
-  getArchiveMemo(day) {
+  getArchiveMemo(day: string) {
     firestore
       .collection("staffs")
       .doc("staff")
@@ -161,9 +163,11 @@ export default class archives extends Mixins(MixinLogger) {
       .doc(this.staffID)
       .collection(day + "archivememo")
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.archivesMemo = obj;
       });
@@ -171,6 +175,7 @@ export default class archives extends Mixins(MixinLogger) {
 
   copyDayArchivesData() {
     //archivesのkeyを格納したarchivesKeyArray配列のlength分、今日の日付のarchives内のdocumentに選択した日付のデータを登録する
+    const archiveDataObject: { [key: string]: any } = this.archivesObj;
     for (let i = 0; i < this.archivesKeyArray.length; i++) {
       firestore
         .collection("archives")
@@ -178,9 +183,10 @@ export default class archives extends Mixins(MixinLogger) {
         .collection("archive")
         .doc(this.archivesKeyArray[i])
         .set({
-          archive: this.archivesObj[this.archivesKeyArray[i]].archive,
-          userName: this.archivesObj[this.archivesKeyArray[i]].userName,
-          userNumber: this.archivesObj[this.archivesKeyArray[i]].userNumber,
+          archive: archiveDataObject[this.archivesKeyArray[i]].value.archive,
+          userName: archiveDataObject[this.archivesKeyArray[i]].value.userName,
+          userNumber:
+            archiveDataObject[this.archivesKeyArray[i]].value.userNumber,
           addArchiveDay: this.today,
           memo: "",
         });
@@ -188,12 +194,12 @@ export default class archives extends Mixins(MixinLogger) {
     alert(this.today + "の記録まとめにコピーしました");
   }
 
-  copyArchivetTextarea(archiveData) {
+  copyArchivetTextarea(archiveData: string) {
     //チェックボックスで選択したarchiveをupdateArchiveに代入しtextareaに表示させる
     this.updateArchive = archiveData;
   }
 
-  updateArchiveData(userID, day) {
+  updateArchiveData(userID: string, day: string) {
     firestore
       .collection("archives")
       .doc(day)
@@ -207,7 +213,7 @@ export default class archives extends Mixins(MixinLogger) {
       });
   }
 
-  deleteArchiveData(userID, day) {
+  deleteArchiveData(userID: string, day: string) {
     firestore
       .collection("archives")
       .doc(day)
@@ -216,7 +222,12 @@ export default class archives extends Mixins(MixinLogger) {
       .delete();
   }
 
-  copyDayGetArchives(archive, number, userName, day) {
+  copyDayGetArchives(
+    archive: string,
+    number: string,
+    userName: string,
+    day: string
+  ) {
     firestore
       .collection("archives")
       .doc(this.today)
@@ -230,7 +241,13 @@ export default class archives extends Mixins(MixinLogger) {
       });
   }
 
-  addArchiveMemo(day, number, userName, memo, archive) {
+  addArchiveMemo(
+    day: string,
+    number: string,
+    userName: string,
+    memo: string,
+    archive: string
+  ) {
     firestore
       .collection("staffs")
       .doc("staff")
@@ -247,7 +264,7 @@ export default class archives extends Mixins(MixinLogger) {
       });
   }
 
-  deleteArchiveMemo(day, number) {
+  deleteArchiveMemo(day: string, number: string) {
     firestore
       .collection("staffs")
       .doc("staff")

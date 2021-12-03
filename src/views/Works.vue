@@ -1,69 +1,82 @@
 <template>
   <div class="scroll">
     <div v-for="data in dailyWorkAllData[today]" :key="data.key">
-      <div v-for="i in dailyWorkAllData[today].checkStaffsPost.length" :key="i">
-        <p>職員名:{{ data[i - 1].staffName }}</p>
-        <p>PHS番号:{{ data[i - 1].phs }}</p>
+      <div
+        v-for="i in dailyWorkAllData[today].value.checkStaffsPost.length"
+        :key="i"
+      >
+        <p>職員名:{{ data.checkStaffsPost[i - 1].staffName }}</p>
+        <p>
+          PHS番号:{{ String(data.checkStaffsPost[i - 1].phs).slice(0, -1) }}
+        </p>
+
         <router-link
-          :to="'/StaffDayWork/' + data[i - 1].phs + '/StaffPage'"
+          :to="
+            '/StaffDayWork/' + data.checkStaffsPost[i - 1].phs + '/StaffPage'
+          "
           class="btn btn-primary p-1"
           >編集</router-link
         >
+
         <ul>
-          <li v-for="n in data[i - 1].work.length" :key="n">
+          <li v-for="n in data.checkStaffsPost[i - 1].work.length" :key="n">
             <p>
-              {{ data[i - 1].work[n - 1] }}:
+              {{ data.checkStaffsPost[i - 1].work[n - 1] }}:
               {{
-                staffCompleteWorkCheck[data[i - 1].staffName].workCheck[n - 1]
+                staffCompleteWorkCheck[data.checkStaffsPost[i - 1].staffName]
+                  .value.workCheck[n - 1]
               }}
             </p>
           </li>
           <li>
             <p>
-              {{ data[i - 1].additionalWorkOne }}:
+              {{ data.checkStaffsPost[i - 1].additionalWorkOne }}:
               {{
-                staffCompleteWorkCheck[data[i - 1].staffName]
-                  .additionalWorkCheck[0]
+                staffCompleteWorkCheck[data.checkStaffsPost[i - 1].staffName]
+                  .value.additionalWorkCheck[0]
               }}
             </p>
           </li>
           <li>
             <p>
-              {{ data[i - 1].additionalWorkTwo }}:
+              {{ data.checkStaffsPost[i - 1].additionalWorkTwo }}:
               {{
-                staffCompleteWorkCheck[data[i - 1].staffName]
-                  .additionalWorkCheck[1]
+                staffCompleteWorkCheck[data.checkStaffsPost[i - 1].staffName]
+                  .value.additionalWorkCheck[1]
               }}
             </p>
           </li>
           <li>
             <p>
-              {{ data[i - 1].additionalWorkThree }}:
+              {{ data.checkStaffsPost[i - 1].additionalWorkThree }}:
               {{
-                staffCompleteWorkCheck[data[i - 1].staffName]
-                  .additionalWorkCheck[2]
+                staffCompleteWorkCheck[data.checkStaffsPost[i - 1].staffName]
+                  .value.additionalWorkCheck[2]
               }}
             </p>
           </li>
           <li>
             <p>メモ:</p>
-            <p style="white-space: pre-wrap; word-wrap: break-word">
-              {{ staffCompleteWorkCheck[data[i - 1].staffName].staffMemo }}
+            <p class="space">
+              {{
+                staffCompleteWorkCheck[data.checkStaffsPost[i - 1].staffName]
+                  .value.staffMemo
+              }}
             </p>
           </li>
         </ul>
+
         <hr />
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class works extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() department!: string;

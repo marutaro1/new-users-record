@@ -3,7 +3,7 @@ import { firestore, auth } from "../firebase/firebase";
 import firebase from "../firebase/firebase";
 
 export default class mixinLogger extends Vue {
-  users = {};
+  users: { [key: string]: any } = {};
   age = 0;
   $_uid!: number;
   dayData =
@@ -38,23 +38,24 @@ export default class mixinLogger extends Vue {
   roomCheck = "";
 
   //Record.vue
-  userRecordObj = {}; //取得した記録の情報を入れ込むアブジェクト
+  userRecordObj: { [key: string]: any } = {}; //取得した記録の情報を入れ込むアブジェクト
   record = ""; //入力した記録を格納する値
   updateDay = ""; //入力した更新用の日付を格納する値
   updateRecord = ""; //入力した更新用の記録を格納する値
   selectDayValue = ""; //選択した日付を入れ、その値をgetUserRecordに引数として渡し、その日付の月の記録を抽出する
   dayKeywordFirst = ""; //getMonthsRecordで選択した日付間(dayKeywordFirst 〜 daykeywordsecond)の記録を抽出するための値
   dayKeywordSecond = ""; //getMonthsRecordで選択した日付間(dayKeywordFirst 〜 daykeywordsecond)の記録を抽出するための値
+  changeValue = false; //最終記録日確認で使用
 
   //manuel.vue
-  manuelObj = {}; //取得したマニュアルの情報を入れ込むアブジェクト
+  manuelObj: { [key: string]: any } = {}; //取得したマニュアルの情報を入れ込むアブジェクト
   manuelTitle = ""; //入力したマニュアルのタイトルを格納する値
   manuel = ""; //入力したマニュアルを格納する値
   updateManuelTitle = ""; //入力した更新用のマニュアルのタイトルを格納する値
   updateManuel = ""; //入力した更新用のマニュアルを格納する値
 
   //MedicalHistory.vue
-  medicalHistoryObj = {}; //取得した既往歴の情報を入れ込むオブジェクト
+  medicalHistoryObj: { [key: string]: any } = {}; //取得した既往歴の情報を入れ込むオブジェクト
   medicalHistory = ""; //入力した既往歴を格納する値
   updateMedicalHistory = ""; //入力した更新用の既往歴を格納する値
 
@@ -105,6 +106,7 @@ export default class mixinLogger extends Vue {
       name: string;
       number: number;
     }
+    this.changeValue = false;
     firestore
       .collection("users")
       .orderBy("number")
@@ -154,9 +156,6 @@ export default class mixinLogger extends Vue {
     auth
       .createUserWithEmailAndPassword(this.email, this.password)
       .then((res) => {
-        console.log(res);
-        console.log(res.user);
-        console.log(res.user!.uid);
         this.staffNameAdd(res.user!.uid);
       });
     alert(
@@ -190,6 +189,9 @@ export default class mixinLogger extends Vue {
         staffName: this.staffName,
         department: this.department,
         officialPosition: this.officialPosition,
+      })
+      .then(() => {
+        this.$router.push("/users");
       });
   }
 
@@ -203,16 +205,14 @@ export default class mixinLogger extends Vue {
   currentPage = 0; // 現在のページ番号
   size = 10; // 1ページに表示するアイテムの上限
   pageRange = 10; // ページネーションに表示するページ数の上限
-  items = []; // 表示するアイテムリスト
+  items: string[] | number[] = []; // 表示するアイテムリスト
   head!: number;
-  arrayData = [];
+  arrayData: string[] | number[] | any = [];
   half = 0;
 
   //ページ数を取得する
   //@return {number} 総ページ数(1はじまり)
   get pages() {
-    console.log(this.items);
-    console.log(this.items.length);
     return Math.ceil(this.items.length / this.size);
   }
 
@@ -245,22 +245,17 @@ export default class mixinLogger extends Vue {
     for (let i = start; i <= end; i++) {
       indexes.push(i);
     }
-    console.log("indexes" + indexes);
+    // console.log("indexes" + indexes);
     return indexes;
   }
 
   // 現在のページで表示するアイテムリストを取得する
   // @return {any} 表示用アイテムリスト
-  displayItems(array: never[]) {
-    console.log(array);
+  displayItems(array: string[] | number[]) {
     this.head = this.currentPage * this.size;
-    console.log("currentpage" + this.currentPage);
     // this.arrayData = arry
-    console.log("head" + this.head);
     this.items = array;
     this.arrayData = array.slice(this.head, this.head + this.size); //0 ~ 10までの配列を表示させる
-    console.log("items");
-    console.log(this.items);
   }
 
   // 現在のページかどうか判定する
@@ -280,10 +275,7 @@ export default class mixinLogger extends Vue {
 
   //ページ後尾に移動する
   last() {
-    console.log(this.currentPage);
     this.currentPage = this.pages - 1;
-    console.log(this.pages);
-    console.log(this.currentPage);
     //this.selectHandler();
   }
 

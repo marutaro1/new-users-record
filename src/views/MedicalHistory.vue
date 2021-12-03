@@ -39,7 +39,7 @@
       <button @click="getMonthsMedicalHistoryData" class="btn btn-primary px-1">
         {{ dayKeywordFirst }}-{{ dayKeywordSecond }}分表示
       </button>
-      <button @click="creaDay" class="btn btn-primary px-1 mx-1">クリア</button>
+      <button @click="creaDay" class="btn btn-primary px-1 mx-2">クリア</button>
     </div>
     <hr />
 
@@ -60,23 +60,25 @@
           class="form-control"
         />
         <datalist id="medicalHistory">
-          <option v-for="n in historyArray" :key="n">{{ n.history }}</option>
+          <option v-for="n in historyArray" :key="n">
+            {{ n.value.history }}
+          </option>
         </datalist>
       </div>
     </div>
 
     <div class="scroll">
       <div v-for="(medicalHistory, key) in historyArray" :key="key">
-        <p>日付: {{ medicalHistory.day }}</p>
-        <p>{{ medicalHistory.history }}</p>
+        <p>日付: {{ medicalHistory.value.day }}</p>
+        <p>{{ medicalHistory.value.history }}</p>
         <button
-          @click="updateMedicalHistoryData(medicalHistory.historyID)"
+          @click="updateMedicalHistoryData(medicalHistory.value.historyID)"
           class="btn btn-primary px-0 col-2 col-lg-1"
         >
           更新
         </button>
         <button
-          @click="deleteMedicalHistoryData(medicalHistory.historyID)"
+          @click="deleteMedicalHistoryData(medicalHistory.value.historyID)"
           class="btn btn-primary px-0 mx-2 col-2 col-lg-1"
         >
           削除
@@ -114,12 +116,12 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class records extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
@@ -130,10 +132,10 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   get serchMedicalHistory() {
-    let historys = [];
+    let historys = [] as string[];
     for (let i in this.medicalHistoryObj) {
       let history = this.medicalHistoryObj[i];
-      if (history.history.indexOf(this.keyword) !== -1) {
+      if (history.value.history.indexOf(this.keyword) !== -1) {
         historys.push(history);
       }
     }
@@ -142,9 +144,11 @@ export default class records extends Mixins(MixinLogger) {
 
   get sortMedicalHistory() {
     //日付順に並び替える
-    return this.serchMedicalHistory.slice().sort((a, b) => {
-      return Number(new Date(a.day)) - Number(new Date(b.day));
-    });
+    return this.serchMedicalHistory
+      .slice()
+      .sort((a: any | string, b: any | string) => {
+        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
+      });
   }
 
   get reverseSortMedicalHistory() {
@@ -171,7 +175,7 @@ export default class records extends Mixins(MixinLogger) {
       });
   }
 
-  updateMedicalHistoryData(uid) {
+  updateMedicalHistoryData(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)
@@ -190,7 +194,7 @@ export default class records extends Mixins(MixinLogger) {
       });
   }
 
-  deleteMedicalHistoryData(uid) {
+  deleteMedicalHistoryData(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)
@@ -205,9 +209,11 @@ export default class records extends Mixins(MixinLogger) {
       .doc(this.userID)
       .collection("medical-history")
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.medicalHistoryObj = obj;
       });
@@ -221,9 +227,11 @@ export default class records extends Mixins(MixinLogger) {
       .where("searchDay", ">=", this.dayKeywordFirst)
       .where("searchDay", "<=", this.dayKeywordSecond)
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
         this.medicalHistoryObj = obj;
       });

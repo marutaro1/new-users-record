@@ -7,7 +7,7 @@
     <div v-for="(plofile, key) in staffPlofile" :key="key">
       <div @mousemove.once="getWorkCheckChange(plofile.staffName)">
         <p>職員名:{{ plofile.staffName }}</p>
-        <p>PHS番号:{{ plofile.phs }}</p>
+        <p>PHS番号:{{ String(plofile.phs).slice(0, -1) }}</p>
         <div v-for="i in plofile.work.length" :key="i">
           <p>
             業務:{{ plofile.work[i - 1] }}:{{ workCheck[i - 1] }}
@@ -67,12 +67,12 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
+import firebase from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class staffPage extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
@@ -92,37 +92,38 @@ export default class staffPage extends Mixins(MixinLogger) {
   }
 
   objectStaff() {
-    const arr = Object.entries(this.dailyWorkAllData[this.today]);
+    const toDay: string = this.today;
+    const dataValue = this.dailyWorkAllData[this.today as keyof typeof toDay];
+    const arr = Object.entries(dataValue);
+    console.log(arr);
     const data = arr[0][1];
     console.log(data);
-    const result = data.filter((value) => {
-      if (Number(value.phs) === Number(this.id)) {
-        return value;
+    const result = data.checkStaffsPost.filter(
+      (value: { [key: string]: string | number }) => {
+        if (Number(value.phs) === Number(this.id)) {
+          return value;
+        }
       }
-    });
+    );
     this.staffDatas = result;
   }
 
-  workCheckChange(i) {
+  workCheckChange(i: number) {
     if (!this.workCheck[i]) {
       this.workCheck[i] = "完了";
-      console.log(this.workCheck);
     } else {
       this.workCheck[i] = "";
-      console.log(this.workCheck);
     }
   }
 
-  additionalWorkCheckChange(i) {
+  additionalWorkCheckChange(i: number) {
     if (this.additionalWorkCheck[i] === "") {
       this.additionalWorkCheck[i] = "完了";
-      console.log(this.additionalWorkCheck);
     } else {
       this.additionalWorkCheck[i] = "";
-      console.log(this.additionalWorkCheck);
     }
   }
-  addWorkCheckChange(staffName) {
+  addWorkCheckChange(staffName: string) {
     firestore
       .collection("staffs")
       .doc("staff")
@@ -135,13 +136,12 @@ export default class staffPage extends Mixins(MixinLogger) {
         additionalWorkCheck: this.additionalWorkCheck,
         staffMemo: this.staffMemo,
       })
-      .then(
-        () => this.$router.push("/StaffDayWork/Works"),
-        alert("完了業務を登録しました。")
-      );
+      .then(() => this.$router.push("/StaffDayWork/Works"));
+    alert("完了業務を登録しました。");
   }
 
-  getWorkCheckChange(staffName) {
+  getWorkCheckChange(staffName: string) {
+    let objTypeKapsel: { [key: string]: any } = {}; //objを型定義するための変数
     firestore
       .collection("staffs")
       .doc("staff")
@@ -149,19 +149,21 @@ export default class staffPage extends Mixins(MixinLogger) {
       .doc(this.today + "completeWork")
       .collection("complete")
       .onSnapshot((querySnapshot) => {
-        const obj = {};
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
         querySnapshot.forEach((doc) => {
           if (doc.id !== staffName) {
             return;
           }
-          obj[doc.id] = doc.data();
+          obj[doc.id] = { value: doc.data() };
         });
-        console.log(obj);
-        console.log(obj[staffName].workCheck);
-        this.workCheck = obj[staffName].workCheck;
-        console.log(obj[staffName].additionalWorkCheck);
-        this.additionalWorkCheck = obj[staffName].additionalWorkCheck;
-        this.staffMemo = obj[staffName].staffMemo;
+        objTypeKapsel = obj;
+        console.log(objTypeKapsel);
+        this.workCheck = objTypeKapsel[staffName].value.workCheck;
+        this.additionalWorkCheck =
+          objTypeKapsel[staffName].value.additionalWorkCheck;
+        this.staffMemo = objTypeKapsel[staffName].value.staffMemo;
       });
   }
 }

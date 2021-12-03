@@ -69,12 +69,11 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { auth } from "./firebase/firebase";
 import MixinLogger from "./views/mixin";
 import { Mixins } from "vue-property-decorator";
 
-@Component
 export default class app extends Mixins(MixinLogger) {
   logOut() {
     console.log("ログアウト");
@@ -84,7 +83,7 @@ export default class app extends Mixins(MixinLogger) {
   doLogin() {
     auth
       .signInWithEmailAndPassword(this.email, this.password)
-      .then(() => this.$router.go("/users"));
+      .then(() => this.$router.push("/users"));
   }
 }
 </script>
@@ -99,5 +98,10 @@ export default class app extends Mixins(MixinLogger) {
   height: 500px;
   overflow: hidden;
   overflow-y: scroll;
+}
+
+.space {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 </style>

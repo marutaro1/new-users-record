@@ -26,7 +26,6 @@
       <label class="col-4 col-form-label">役職:</label>
       <div class="col-6 col-lg-2">
         <select v-model="officialPosition" class="form-select form-select-sm">
-          <option value="" selected="selected">選択してください</option>
           <option value="">役職なし</option>
           <option value="leader">リーダー</option>
           <option value="chief">主任</option>
@@ -66,11 +65,10 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore, auth } from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins } from "vue-property-decorator";
 
-@Component
 export default class signup extends Mixins(MixinLogger) {}
 </script>

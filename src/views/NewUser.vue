@@ -60,12 +60,11 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from "vue-class-component";
+import { Vue } from "vue-class-component";
 import { firestore } from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
-@Component
 export default class about extends Mixins(MixinLogger) {
   addUsers() {
     //userを登録するメソッド
@@ -83,13 +82,13 @@ export default class about extends Mixins(MixinLogger) {
         checkRecordDay: "",
       })
       .then(() => {
-        console.log("登録しました。");
+        alert("登録しました。");
         this.name = "";
         this.birthday = "";
         this.careLevel = "";
         this.number = "";
         this.roomCheck = "";
-        this.age = "";
+        this.age = 0;
       });
   }
 }
