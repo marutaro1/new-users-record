@@ -157,7 +157,7 @@ export default class manuel extends Mixins(MixinLogger) {
       });
   }
 
-  deleteManueldata(uid: string) {
+  deleteManuelData(uid: string) {
     firestore
       .collection("users")
       .doc(this.userID)

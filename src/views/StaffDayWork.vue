@@ -246,7 +246,7 @@ export default class staffdaywork extends Mixins(MixinLogger) {
         this.staffDatas = obj;
         if (this.departmentWorks !== "studentSupport") {
           this.staffOfficialPosition =
-            this.staffDatas[this.staffKey].value.officialPosition;
+            this.staffDatas[this.staffID].value.officialPosition;
         } else {
           this.staffOfficialPosition = "leader";
         }

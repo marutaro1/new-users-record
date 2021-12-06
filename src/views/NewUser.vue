@@ -51,11 +51,6 @@
       </select>
     </div>
     <br />
-    <p>{{ name }}</p>
-    <p>{{ birthday }}</p>
-    <p>{{ careLevel }}</p>
-    <p>{{ number }}</p>
-    <p>{{ roomCheck }}</p>
     <button @click="addUsers" class="btn btn-primary">登録</button>
   </div>
 </template>
@@ -68,14 +63,12 @@ import { Mixins, Prop } from "vue-property-decorator";
 export default class about extends Mixins(MixinLogger) {
   addUsers() {
     //userを登録するメソッド
-    this.ageView(this.birthday);
     firestore
       .collection("users")
       .doc()
       .set({
         name: this.name,
         birthday: this.birthday,
-        age: this.age,
         careLevel: this.careLevel,
         number: Number(this.number + this.roomCheck),
         Floor: parseInt(String(Number(this.number) / 100)) + "F",

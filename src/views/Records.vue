@@ -186,16 +186,6 @@ export default class records extends Mixins(MixinLogger) {
 
   dayDataValue = "";
 
-  dayDataSet() {
-    const i = this.recordArray[0].value.day;
-    if (i.slice(0, 10) === this.day.slice(0, 10)) {
-      this.dayDataValue = i.slice(0, 10);
-    } else if (Number(i.slice(5, 7)) < Number(this.day.slice(5, 7))) {
-      this.dayDataValue = this.day.slice(0, 10);
-    }
-    console.log(this.dayDataValue);
-  }
-
   addUserRecord() {
     firestore
       .collection("users")
@@ -210,35 +200,28 @@ export default class records extends Mixins(MixinLogger) {
         staffName: this.displayStaffName,
       })
       .then(() => {
-        //record登録時、userに最新record登録日数を入れる
-        //this.dayDataSet();
+        alert("登録しました");
+        this.day =
+          new Date().getFullYear() +
+          "-" +
+          ("00" + (new Date().getMonth() + 1)).slice(-2) +
+          "-" +
+          ("00" + new Date().getDate()).slice(-2) +
+          "T" +
+          ("00" + new Date().getHours()).slice(-2) +
+          ":" +
+          "00"; //入力した日付を格納する値
+        this.record = "";
+        this.uidCreate();
 
         const i = this.recordArray[0].value.day;
         console.log(i);
         if (i.slice(0, 10) === this.today) {
           this.dayDataValue = i.slice(0, 10);
 
-          firestore
-            .collection("users")
-            .doc(this.userID)
-            .update({
-              checkRecordDay: this.dayDataValue,
-            })
-            .then(() => {
-              this.day =
-                new Date().getFullYear() +
-                "-" +
-                ("00" + (new Date().getMonth() + 1)).slice(-2) +
-                "-" +
-                ("00" + new Date().getDate()).slice(-2) +
-                "T" +
-                ("00" + new Date().getHours()).slice(-2) +
-                ":" +
-                "00"; //入力した日付を格納する値
-
-              this.record = "";
-              this.uidCreate();
-            });
+          firestore.collection("users").doc(this.userID).update({
+            checkRecordDay: this.dayDataValue,
+          });
         }
       });
   }
@@ -257,22 +240,19 @@ export default class records extends Mixins(MixinLogger) {
         staffName: this.displayStaffName,
       })
       .then(() => {
+        alert("更新しました");
+        this.updateDay = "";
+        this.updateRecord = "";
+        this.uidCreate();
+        console.log(this.dayDataValue);
+
         const i = this.recordArray[0].value.day;
         if (i.slice(0, 10) === this.today) {
           this.dayDataValue = i.slice(0, 10);
-          firestore
-            .collection("users")
-            .doc(this.userID)
-            .update({
-              checkRecordDay: this.dayDataValue,
-            })
-            .then(() => {
-              this.updateDay = "";
-              this.updateRecord = "";
-              this.uidCreate();
-            });
+          firestore.collection("users").doc(this.userID).update({
+            checkRecordDay: this.dayDataValue,
+          });
         }
-        console.log(this.dayDataValue);
       });
   }
 
@@ -349,6 +329,9 @@ export default class records extends Mixins(MixinLogger) {
         userNumber: Number(this.id),
         addArchiveDay: this.today,
         memo: "", //DayArchive.vueでメモを追加する際にデータを格納するための値
+      })
+      .then(() => {
+        alert("記録まとめへ追加");
       });
   }
 }

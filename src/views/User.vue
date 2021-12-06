@@ -72,8 +72,8 @@ export default {
     },
     age() {
       return function (a) {
-        var ageTime = Date.now() - new Date(a).getTime();
-        var ageDate = new Date(ageTime);
+        const ageTime = Date.now() - new Date(a).getTime();
+        const ageDate = new Date(ageTime);
         return ageDate.getUTCFullYear() - 1970;
       };
     },

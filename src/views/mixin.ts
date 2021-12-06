@@ -66,7 +66,6 @@ export default class mixinLogger extends Vue {
   //SignUp.vue
   staffs = {};
   staffid = "";
-  staffKey = "";
   staffName = ""; //入力した職員名を格納する値
   department = ""; //入力した部署を格納する値
   officialPosition = ""; //入力した役職を格納する値
@@ -123,12 +122,6 @@ export default class mixinLogger extends Vue {
       });
   }
 
-  ageView(day: string): void {
-    const ageTime = Date.now() - new Date(day).getTime();
-    const ageDate = new Date(ageTime);
-    this.age = ageDate.getUTCFullYear() - 1970;
-  }
-
   staffNameSeek(staffID: string) {
     //ログインしているstaffの名前を取得する
     firestore
@@ -144,10 +137,8 @@ export default class mixinLogger extends Vue {
           obj[doc.id] = { value: doc.data() };
         });
         this.staffs = obj;
-        this.staffKey = staffID;
-        const displayNameData: string = obj[staffID].value.staffName;
+        this.displayStaffName = obj[staffID].value.staffName;
         // console.log(displayNameData)
-        this.displayStaffName = displayNameData;
         // console.log(this.displayStaffName)
       });
   }
