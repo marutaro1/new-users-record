@@ -105,7 +105,9 @@
         class="form-control"
       />
       <datalist id="treatment">
-        <option v-for="n in treatmentArray" :key="n">{{ n.treatment }}</option>
+        <option v-for="n in treatmentArray" :key="n">
+          {{ n.value.treatment }}
+        </option>
       </datalist>
     </div>
 
@@ -174,20 +176,29 @@ export default class treatment extends Mixins(MixinLogger) {
 
   defaultBoolean = false; //新規処置登録と処置内容更新のtextareaを隠すための値
 
+  treatmentsDb = firestore //処置内容が登録してあるDB
+    .collection("treatment");
+
+  userTreatmentsDb = firestore //日々の処置の記録がuserごとに登録してあるDB
+    .collection("users")
+    .doc(this.userID)
+    .collection("treatment");
+
   inversionBoolean() {
     //defaultBoolean反転のための値
     this.defaultBoolean = !this.defaultBoolean;
   }
 
   get treatmentArray() {
-    this.displayItems(this.reverseSortTreatment);
+    this.sortArray(this.serchTreatment);
+    this.displayItems(this.dataArrays);
     return this.arrayData;
   }
 
   get serchTreatment() {
-    let dayTreatments = [] as string[];
+    const dayTreatments = [] as string[];
     for (let i in this.dayTreatmentObj) {
-      let treatmentData = this.dayTreatmentObj[i];
+      const treatmentData = this.dayTreatmentObj[i];
       if (treatmentData.value.treatment.indexOf(this.keyword) !== -1) {
         dayTreatments.push(treatmentData);
       }
@@ -195,24 +206,9 @@ export default class treatment extends Mixins(MixinLogger) {
     return dayTreatments;
   }
 
-  get sortTreatment() {
-    //日付順に並び替える
-    return this.serchTreatment
-      .slice()
-      .sort((a: any | string, b: any | string) => {
-        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
-      });
-  }
-
-  get reverseSortTreatment() {
-    //日付逆転追加
-    return this.sortTreatment.slice().reverse();
-  }
-
   addNewTreatmentData() {
     //新規処置登録用のメソッド
-    firestore
-      .collection("treatment")
+    this.treatmentsDb
       .doc(String(this.$_uid))
       .set({
         treatment: this.newTreatment,
@@ -225,7 +221,7 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   getNewTreatmentData() {
-    firestore.collection("treatment").onSnapshot((querySnapshot) => {
+    this.treatmentsDb.onSnapshot((querySnapshot) => {
       const obj: {
         [key: string]: { value: firebase.firestore.DocumentData };
       } = {};
@@ -237,10 +233,7 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   addDayTreatmentData() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("treatment")
+    this.userTreatmentsDb
       .doc(String(this.$_uid))
       .set({
         treatment: this.dayTreatment,
@@ -255,34 +248,24 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   deleteDayTreatmentData(treatmentID: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("treatment")
-      .doc(String(treatmentID))
-      .delete();
+    this.userTreatmentsDb.doc(String(treatmentID)).delete();
     alert("削除しました");
   }
 
   getDayTreatment() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("treatment")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.dayTreatmentObj = obj;
+    this.userTreatmentsDb.onSnapshot((querySnapshot) => {
+      const obj: {
+        [key: string]: { value: firebase.firestore.DocumentData };
+      } = {};
+      querySnapshot.forEach((doc) => {
+        obj[doc.id] = { value: doc.data() };
       });
+      this.dayTreatmentObj = obj;
+    });
   }
 
   deleteTreatmentData(uid: string) {
-    firestore
-      .collection("treatment")
+    this.treatmentsDb
       .doc(String(uid))
       .delete()
       .then(() => {
@@ -293,8 +276,7 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   updateTreatmentData(uid: string) {
-    firestore
-      .collection("treatment")
+    this.treatmentsDb
       .doc(String(uid))
       .update({
         treatment: this.updateTreatmentText,

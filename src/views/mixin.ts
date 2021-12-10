@@ -240,6 +240,18 @@ export default class mixinLogger extends Vue {
     return indexes;
   }
 
+  dataArrays: string[] = [];
+
+  sortArray(array: string[]) {
+    //日付順に並び替える
+    this.dataArrays = array
+      .slice()
+      .sort((a: any | string, b: any | string) => {
+        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
+      })
+      .reverse();
+  }
+
   // 現在のページで表示するアイテムリストを取得する
   // @return {any} 表示用アイテムリスト
   displayItems(array: string[] | number[]) {

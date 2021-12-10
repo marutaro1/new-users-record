@@ -53,7 +53,7 @@
       <button @click="getMonthsRecord" class="btn btn-primary px-1">
         {{ dayKeywordFirst }}-{{ dayKeywordSecond }}分表示
       </button>
-      <button class="btn btn-primary px-1 mx-2">クリア</button>
+      <button @click="creaDay" class="btn btn-primary px-1 mx-2">クリア</button>
     </div>
     <hr />
     <div>
@@ -152,45 +152,31 @@ export default class records extends Mixins(MixinLogger) {
   @Prop() userName!: string;
 
   pagination = {};
+  dayDataValue = "";
+  recordsDb = firestore
+    .collection("users")
+    .doc(this.userID)
+    .collection("user-record");
 
   get recordArray() {
-    this.displayItems(this.reverseSortRecords);
+    this.sortArray(this.serchRecords);
+    this.displayItems(this.dataArrays);
     return this.arrayData;
   }
 
   get serchRecords() {
     const userRecords = [];
     for (let i in this.userRecordObj) {
-      let keywordData: string = this.keyword;
-      let recordData = this.userRecordObj[i];
-      if (recordData.value.record.indexOf(keywordData) !== -1) {
+      const recordData = this.userRecordObj[i];
+      if (recordData.value.record.indexOf(this.keyword) !== -1) {
         userRecords.push(recordData);
       }
     }
     return userRecords;
   }
 
-  get sortRecords() {
-    //日付順に並び替える
-    return this.serchRecords
-      .slice()
-      .sort((a: any | string, b: any | string) => {
-        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
-      });
-  }
-
-  get reverseSortRecords() {
-    //日付逆転追加
-    return this.sortRecords.slice().reverse();
-  }
-
-  dayDataValue = "";
-
   addUserRecord() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("user-record")
+    this.recordsDb
       .doc(String(this.$_uid))
       .set({
         day: this.day,
@@ -227,11 +213,8 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   updateUserRecord(uid: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("user-record")
-      .doc(String(uid))
+    this.recordsDb
+      .doc(String(this.$_uid))
       .update({
         day: this.updateDay,
         searchDay: this.updateDay.slice(0, 10), //検索用の値 YYYY-MM-DDで登録
@@ -257,11 +240,8 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   deleteUserRecord(uid: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("user-record")
-      .doc(String(uid))
+    this.recordsDb
+      .doc(String(this.$_uid))
       .delete()
       .then(() => {
         if (this.recordArray[0]) {
@@ -281,10 +261,7 @@ export default class records extends Mixins(MixinLogger) {
   getUserRecord(dayValue: string) {
     const startDay = dayValue + "-01";
     const endDay = dayValue + "-31";
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("user-record")
+    this.recordsDb
       .where("day", ">=", startDay)
       .where("day", "<=", endDay)
       .limit(150)
@@ -300,10 +277,7 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   getMonthsRecord() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("user-record")
+    this.recordsDb
       .where("searchDay", ">=", this.dayKeywordFirst)
       .where("searchDay", "<=", this.dayKeywordSecond)
       .onSnapshot((querySnapshot) => {
@@ -333,6 +307,12 @@ export default class records extends Mixins(MixinLogger) {
       .then(() => {
         alert("記録まとめへ追加");
       });
+  }
+
+  creaDay() {
+    this.dayKeywordFirst = "";
+    this.dayKeywordSecond = "";
+    this.getUserRecord(this.dayData);
   }
 }
 </script>

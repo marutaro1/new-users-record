@@ -103,15 +103,20 @@ export default class manuel extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
 
+  manuelsDb = firestore
+    .collection("users")
+    .doc(this.userID)
+    .collection("manuel");
+
   get manuelArray() {
     this.displayItems(this.serchManuel);
     return this.arrayData;
   }
 
   get serchManuel(): string[] {
-    let manuels = [] as string[];
+    const manuels = [] as string[];
     for (let i in this.manuelObj) {
-      let manuelData = this.manuelObj[i];
+      const manuelData = this.manuelObj[i];
       if (
         manuelData.value.manuelTitle.indexOf(this.keyword) !== -1 ||
         manuelData.value.manuel.indexOf(this.keyword) !== -1
@@ -123,10 +128,7 @@ export default class manuel extends Mixins(MixinLogger) {
   }
 
   addManuelData() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("manuel")
+    this.manuelsDb
       .doc(String(this.$_uid))
       .set({
         manuelTitle: this.manuelTitle,
@@ -141,10 +143,7 @@ export default class manuel extends Mixins(MixinLogger) {
   }
 
   updateManuelData(uid: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("manuel")
+    this.manuelsDb
       .doc(String(uid))
       .update({
         manuelTitle: this.updateManuelTitle,
@@ -158,28 +157,19 @@ export default class manuel extends Mixins(MixinLogger) {
   }
 
   deleteManuelData(uid: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("manuel")
-      .doc(String(uid))
-      .delete();
+    this.manuelsDb.doc(String(uid)).delete();
   }
 
   getManuelData() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("manuel")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.manuelObj = obj;
+    this.manuelsDb.onSnapshot((querySnapshot) => {
+      const obj: {
+        [key: string]: { value: firebase.firestore.DocumentData };
+      } = {};
+      querySnapshot.forEach((doc) => {
+        obj[doc.id] = { value: doc.data() };
       });
+      this.manuelObj = obj;
+    });
   }
 }
 </script>

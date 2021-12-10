@@ -126,15 +126,21 @@ export default class records extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
 
+  medicalHistorysDb = firestore
+    .collection("users")
+    .doc(this.userID)
+    .collection("medical-history");
+
   get historyArray() {
-    this.displayItems(this.reverseSortMedicalHistory);
+    this.sortArray(this.serchMedicalHistory);
+    this.displayItems(this.dataArrays);
     return this.arrayData;
   }
 
   get serchMedicalHistory() {
-    let historys = [] as string[];
+    const historys = [] as string[];
     for (let i in this.medicalHistoryObj) {
-      let history = this.medicalHistoryObj[i];
+      const history = this.medicalHistoryObj[i];
       if (history.value.history.indexOf(this.keyword) !== -1) {
         historys.push(history);
       }
@@ -142,25 +148,8 @@ export default class records extends Mixins(MixinLogger) {
     return historys;
   }
 
-  get sortMedicalHistory() {
-    //日付順に並び替える
-    return this.serchMedicalHistory
-      .slice()
-      .sort((a: any | string, b: any | string) => {
-        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
-      });
-  }
-
-  get reverseSortMedicalHistory() {
-    //日付逆転追加
-    return this.sortMedicalHistory.slice().reverse();
-  }
-
   addMedicalHistoryData() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("medical-history")
+    this.medicalHistorysDb
       .doc(String(this.$_uid))
       .set({
         day: this.today,
@@ -176,10 +165,7 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   updateMedicalHistoryData(uid: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("medical-history")
+    this.medicalHistorysDb
       .doc(String(uid))
       .update({
         day: this.updateDay,
@@ -195,35 +181,23 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   deleteMedicalHistoryData(uid: string) {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("medical-history")
-      .doc(String(uid))
-      .delete();
+    this.medicalHistorysDb.doc(String(uid)).delete();
   }
 
   getMedicalHistoryData() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("medical-history")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.medicalHistoryObj = obj;
+    this.medicalHistorysDb.onSnapshot((querySnapshot) => {
+      const obj: {
+        [key: string]: { value: firebase.firestore.DocumentData };
+      } = {};
+      querySnapshot.forEach((doc) => {
+        obj[doc.id] = { value: doc.data() };
       });
+      this.medicalHistoryObj = obj;
+    });
   }
 
   getMonthsMedicalHistoryData() {
-    firestore
-      .collection("users")
-      .doc(this.userID)
-      .collection("medical-history")
+    this.medicalHistorysDb
       .where("searchDay", ">=", this.dayKeywordFirst)
       .where("searchDay", "<=", this.dayKeywordSecond)
       .onSnapshot((querySnapshot) => {
