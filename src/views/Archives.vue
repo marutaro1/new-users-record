@@ -51,7 +51,7 @@
         <p class="mb-0">名前: {{ archive.value.userName }}</p>
 
         <button
-          @click="copyArchivetTextarea(archive.value.archive)"
+          @click="copyArchiveTextarea(archive.value.archive)"
           class="btn btn-warning rounded-circle p-0 px-1 mb-1"
         >
           ✔︎
@@ -84,7 +84,6 @@
             <button
               @click="
                 addArchiveMemo(
-                  today,
                   key,
                   archive.value.userName,
                   archive.value.memo,
@@ -96,7 +95,7 @@
               メモ登録
             </button>
             <button
-              @click="deleteArchiveMemo(today, key)"
+              @click="deleteArchiveMemo(key)"
               class="btn btn-primary mx-2"
             >
               メモ削除
@@ -131,9 +130,11 @@ export default class archives extends Mixins(MixinLogger) {
   archivesMemo = {};
   archivesKeyArray: string[] = [];
 
+  archivesDb = firestore.collection("archives");
+  staffsDb = firestore.collection("staffs").doc("staff");
+
   getArchives(day: string) {
-    firestore
-      .collection("archives")
+    this.archivesDb
       .doc(day)
       .collection("archive")
       .orderBy("userNumber")
@@ -141,44 +142,45 @@ export default class archives extends Mixins(MixinLogger) {
         const obj: {
           [key: string]: { value: firebase.firestore.DocumentData };
         } = {};
-        let array!: string[];
-        array = [];
+        let array: string[] = [];
         querySnapshot.forEach((doc) => {
           array = [...array, doc.id];
           obj[doc.id] = { value: doc.data() };
-          console.log(doc.id);
         });
         this.archivesObj = obj;
         this.archivesKeyArray = array;
         this.dayPreview = day;
-        this.getArchiveMemo(this.today);
+        this.getArchiveMemo();
       });
   }
 
-  getArchiveMemo(day: string) {
-    firestore
-      .collection("staffs")
-      .doc("staff")
-      .collection(this.staffID)
-      .doc(this.staffID)
-      .collection(day + "archivememo")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.archivesMemo = obj;
+  updateArchiveData(userID: string, day: string) {
+    this.archivesDb
+      .doc(day)
+      .collection("archive")
+      .doc(userID)
+      .update({
+        archive: this.updateArchive,
+      })
+      .then(() => {
+        this.updateArchive = "";
       });
+  }
+
+  deleteArchiveData(userID: string, day: string) {
+    this.archivesDb.doc(day).collection("archive").doc(userID).delete();
+  }
+
+  copyArchiveTextarea(archiveData: string) {
+    //チェックボックスで選択したarchiveをupdateArchiveに代入しtextareaに表示させる
+    this.updateArchive = archiveData;
   }
 
   copyDayArchivesData() {
     //archivesのkeyを格納したarchivesKeyArray配列のlength分、今日の日付のarchives内のdocumentに選択した日付のデータを登録する
-    const archiveDataObject: { [key: string]: any } = this.archivesObj;
+    const archiveDataObject: { [key: string]: any } = this.archivesObj; //this.archivesObjでは型が当てはまらずエラーになってしまうため
     for (let i = 0; i < this.archivesKeyArray.length; i++) {
-      firestore
-        .collection("archives")
+      this.archivesDb
         .doc(this.today)
         .collection("archive")
         .doc(this.archivesKeyArray[i])
@@ -194,84 +196,48 @@ export default class archives extends Mixins(MixinLogger) {
     alert(this.today + "の記録まとめにコピーしました");
   }
 
-  copyArchivetTextarea(archiveData: string) {
-    //チェックボックスで選択したarchiveをupdateArchiveに代入しtextareaに表示させる
-    this.updateArchive = archiveData;
-  }
-
-  updateArchiveData(userID: string, day: string) {
-    firestore
-      .collection("archives")
-      .doc(day)
-      .collection("archive")
-      .doc(userID)
-      .update({
-        archive: this.updateArchive,
-      })
-      .then(() => {
-        this.updateArchive = "";
-      });
-  }
-
-  deleteArchiveData(userID: string, day: string) {
-    firestore
-      .collection("archives")
-      .doc(day)
-      .collection("archive")
-      .doc(userID)
-      .delete();
-  }
-
-  copyDayGetArchives(
-    archive: string,
-    number: string,
-    userName: string,
-    day: string
-  ) {
-    firestore
-      .collection("archives")
-      .doc(this.today)
-      .collection("archive")
-      .doc(number)
-      .set({
-        archive: archive,
-        userName: userName,
-        userNumber: number,
-        addArchiveDay: this.today,
-      });
-  }
-
   addArchiveMemo(
-    day: string,
     number: string,
     userName: string,
     memo: string,
     archive: string
   ) {
-    firestore
-      .collection("staffs")
-      .doc("staff")
+    this.staffsDb
       .collection(this.staffID)
       .doc(this.staffID)
-      .collection(day + "archivememo")
+      .collection(this.today + "archivememo")
       .doc(number)
       .set({
         userName: userName,
         memo: memo,
-        day: day,
+        day: this.today,
         number: number,
         archive: archive,
       });
   }
 
-  deleteArchiveMemo(day: string, number: string) {
-    firestore
-      .collection("staffs")
-      .doc("staff")
+  getArchiveMemo() {
+    this.staffsDb
       .collection(this.staffID)
       .doc(this.staffID)
-      .collection(day + "archivememo")
-      .doc(number)
+      .collection(this.today + "archivememo")
+      .onSnapshot((querySnapshot) => {
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
+        querySnapshot.forEach((doc) => {
+          obj[doc.id] = { value: doc.data() };
+        });
+        this.archivesMemo = obj;
+      });
+  }
+
+  deleteArchiveMemo(userID: string) {
+    this.staffsDb
+      .collection(this.staffID)
+      .doc(this.staffID)
+      .collection(this.today + "archivememo")
+      .doc(userID)
       .delete();
   }
 }
