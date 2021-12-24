@@ -161,15 +161,20 @@ export default class manuel extends Mixins(MixinLogger) {
   }
 
   getManuelData() {
-    this.manuelsDb.onSnapshot((querySnapshot) => {
-      const obj: {
-        [key: string]: { value: firebase.firestore.DocumentData };
-      } = {};
-      querySnapshot.forEach((doc) => {
-        obj[doc.id] = { value: doc.data() };
-      });
-      this.manuelObj = obj;
-    });
+    this.manuelsDb.onSnapshot(
+      (querySnapshot) => {
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
+        querySnapshot.forEach((doc) => {
+          obj[doc.id] = { value: doc.data() };
+        });
+        this.manuelObj = obj;
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
   }
 }
 </script>

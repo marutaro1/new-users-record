@@ -185,22 +185,8 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   getMedicalHistoryData() {
-    this.medicalHistorysDb.onSnapshot((querySnapshot) => {
-      const obj: {
-        [key: string]: { value: firebase.firestore.DocumentData };
-      } = {};
-      querySnapshot.forEach((doc) => {
-        obj[doc.id] = { value: doc.data() };
-      });
-      this.medicalHistoryObj = obj;
-    });
-  }
-
-  getMonthsMedicalHistoryData() {
-    this.medicalHistorysDb
-      .where("searchDay", ">=", this.dayKeywordFirst)
-      .where("searchDay", "<=", this.dayKeywordSecond)
-      .onSnapshot((querySnapshot) => {
+    this.medicalHistorysDb.onSnapshot(
+      (querySnapshot) => {
         const obj: {
           [key: string]: { value: firebase.firestore.DocumentData };
         } = {};
@@ -208,7 +194,31 @@ export default class records extends Mixins(MixinLogger) {
           obj[doc.id] = { value: doc.data() };
         });
         this.medicalHistoryObj = obj;
-      });
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
+  }
+
+  getMonthsMedicalHistoryData() {
+    this.medicalHistorysDb
+      .where("searchDay", ">=", this.dayKeywordFirst)
+      .where("searchDay", "<=", this.dayKeywordSecond)
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            obj[doc.id] = { value: doc.data() };
+          });
+          this.medicalHistoryObj = obj;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 
   creaDay() {

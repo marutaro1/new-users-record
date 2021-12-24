@@ -114,7 +114,7 @@
       <p>{{ currentPage + 1 }}ページ</p>
       <div class="container">
         <nav>
-          <ul class="pagination">
+          <ul class="pagination" style="justify-content: center">
             <li class="page-item">
               <a @click="first" class="page-link">&laquo;</a>
             </li>
@@ -186,7 +186,6 @@ export default class records extends Mixins(MixinLogger) {
         staffName: this.displayStaffName,
       })
       .then(() => {
-        alert("登録しました");
         this.day =
           new Date().getFullYear() +
           "-" +
@@ -199,6 +198,7 @@ export default class records extends Mixins(MixinLogger) {
           "00"; //入力した日付を格納する値
         this.record = "";
         this.uidCreate();
+        alert("登録しました");
 
         const i = this.recordArray[0].value.day;
         console.log(i);
@@ -214,7 +214,7 @@ export default class records extends Mixins(MixinLogger) {
 
   updateUserRecord(uid: string) {
     this.recordsDb
-      .doc(String(this.$_uid))
+      .doc(String(uid))
       .update({
         day: this.updateDay,
         searchDay: this.updateDay.slice(0, 10), //検索用の値 YYYY-MM-DDで登録
@@ -226,8 +226,6 @@ export default class records extends Mixins(MixinLogger) {
         alert("更新しました");
         this.updateDay = "";
         this.updateRecord = "";
-        this.uidCreate();
-        console.log(this.dayDataValue);
 
         const i = this.recordArray[0].value.day;
         if (i.slice(0, 10) === this.today) {
@@ -241,7 +239,7 @@ export default class records extends Mixins(MixinLogger) {
 
   deleteUserRecord(uid: string) {
     this.recordsDb
-      .doc(String(this.$_uid))
+      .doc(String(uid))
       .delete()
       .then(() => {
         if (this.recordArray[0]) {
@@ -251,10 +249,10 @@ export default class records extends Mixins(MixinLogger) {
           //recordがない場合には、空の文字列をcheckRecordDayに入れ込む
           this.dayDataValue = "";
         }
-        alert("削除しました");
         firestore.collection("users").doc(this.userID).update({
           checkRecordDay: this.dayDataValue,
         });
+        alert("削除しました");
       });
   }
 
@@ -265,30 +263,40 @@ export default class records extends Mixins(MixinLogger) {
       .where("day", ">=", startDay)
       .where("day", "<=", endDay)
       .limit(150)
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.userRecordObj = obj;
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            obj[doc.id] = { value: doc.data() };
+          });
+          this.userRecordObj = obj;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 
   getMonthsRecord() {
     this.recordsDb
       .where("searchDay", ">=", this.dayKeywordFirst)
       .where("searchDay", "<=", this.dayKeywordSecond)
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.userRecordObj = obj;
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            obj[doc.id] = { value: doc.data() };
+          });
+          this.userRecordObj = obj;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 
   addArchives(record: string) {

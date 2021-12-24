@@ -138,20 +138,25 @@ export default class archives extends Mixins(MixinLogger) {
       .doc(day)
       .collection("archive")
       .orderBy("userNumber")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        let array: string[] = [];
-        querySnapshot.forEach((doc) => {
-          array = [...array, doc.id];
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.archivesObj = obj;
-        this.archivesKeyArray = array;
-        this.dayPreview = day;
-        this.getArchiveMemo();
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          let array: string[] = [];
+          querySnapshot.forEach((doc) => {
+            array = [...array, doc.id];
+            obj[doc.id] = { value: doc.data() };
+          });
+          this.archivesObj = obj;
+          this.archivesKeyArray = array;
+          this.dayPreview = day;
+          this.getArchiveMemo();
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 
   updateArchiveData(userID: string, day: string) {
@@ -221,15 +226,20 @@ export default class archives extends Mixins(MixinLogger) {
       .collection(this.staffID)
       .doc(this.staffID)
       .collection(this.today + "archivememo")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.archivesMemo = obj;
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            obj[doc.id] = { value: doc.data() };
+          });
+          this.archivesMemo = obj;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 
   deleteArchiveMemo(userID: string) {

@@ -75,7 +75,6 @@ import { Mixins, Prop } from "vue-property-decorator";
 
 export default class staffPage extends Mixins(MixinLogger) {
   @Prop() id!: number;
-  @Prop() userID!: string;
   @Prop() dailyWorkAllData!: string;
   @Prop() departmentWorks!: string;
   @Prop() today!: string;
@@ -93,7 +92,7 @@ export default class staffPage extends Mixins(MixinLogger) {
 
   objectStaff() {
     const toDay: string = this.today;
-    const dataValue = this.dailyWorkAllData[this.today as keyof typeof toDay];
+    const dataValue = this.dailyWorkAllData[this.today as keyof typeof toDay]; //keyに動的な変数を入れるため as key typeofを使用
     const arr = Object.entries(dataValue);
     console.log(arr);
     const data = arr[0][1];
@@ -148,23 +147,28 @@ export default class staffPage extends Mixins(MixinLogger) {
       .collection("daily-work-" + this.departmentWorks)
       .doc(this.today + "completeWork")
       .collection("complete")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          if (doc.id !== staffName) {
-            return;
-          }
-          obj[doc.id] = { value: doc.data() };
-        });
-        objTypeKapsel = obj;
-        console.log(objTypeKapsel);
-        this.workCheck = objTypeKapsel[staffName].value.workCheck;
-        this.additionalWorkCheck =
-          objTypeKapsel[staffName].value.additionalWorkCheck;
-        this.staffMemo = objTypeKapsel[staffName].value.staffMemo;
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            if (doc.id !== staffName) {
+              return;
+            }
+            obj[doc.id] = { value: doc.data() };
+          });
+          objTypeKapsel = obj;
+          console.log(objTypeKapsel);
+          this.workCheck = objTypeKapsel[staffName].value.workCheck;
+          this.additionalWorkCheck =
+            objTypeKapsel[staffName].value.additionalWorkCheck;
+          this.staffMemo = objTypeKapsel[staffName].value.staffMemo;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 }
 </script>

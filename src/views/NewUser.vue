@@ -65,14 +65,15 @@ export default class about extends Mixins(MixinLogger) {
     //userを登録するメソッド
     firestore
       .collection("users")
-      .doc()
+      .doc(String(this.$_uid))
       .set({
         name: this.name,
         birthday: this.birthday,
         careLevel: this.careLevel,
         number: Number(this.number + this.roomCheck),
-        Floor: parseInt(String(Number(this.number) / 100)) + "F",
+        //Floor: parseInt(String(Number(this.number) / 100)) + "F",
         checkRecordDay: "",
+        userID: String(this.$_uid),
       })
       .then(() => {
         alert("登録しました。");

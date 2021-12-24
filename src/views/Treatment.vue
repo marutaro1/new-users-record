@@ -221,15 +221,20 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   getNewTreatmentData() {
-    this.treatmentsDb.onSnapshot((querySnapshot) => {
-      const obj: {
-        [key: string]: { value: firebase.firestore.DocumentData };
-      } = {};
-      querySnapshot.forEach((doc) => {
-        obj[doc.id] = { value: doc.data() };
-      });
-      this.newTreatmentObj = obj;
-    });
+    this.treatmentsDb.onSnapshot(
+      (querySnapshot) => {
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
+        querySnapshot.forEach((doc) => {
+          obj[doc.id] = { value: doc.data() };
+        });
+        this.newTreatmentObj = obj;
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
   }
 
   addDayTreatmentData() {
@@ -253,15 +258,20 @@ export default class treatment extends Mixins(MixinLogger) {
   }
 
   getDayTreatment() {
-    this.userTreatmentsDb.onSnapshot((querySnapshot) => {
-      const obj: {
-        [key: string]: { value: firebase.firestore.DocumentData };
-      } = {};
-      querySnapshot.forEach((doc) => {
-        obj[doc.id] = { value: doc.data() };
-      });
-      this.dayTreatmentObj = obj;
-    });
+    this.userTreatmentsDb.onSnapshot(
+      (querySnapshot) => {
+        const obj: {
+          [key: string]: { value: firebase.firestore.DocumentData };
+        } = {};
+        querySnapshot.forEach((doc) => {
+          obj[doc.id] = { value: doc.data() };
+        });
+        this.dayTreatmentObj = obj;
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
   }
 
   deleteTreatmentData(uid: string) {

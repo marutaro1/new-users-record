@@ -135,7 +135,9 @@ export default class users extends Mixins(MixinLogger) {
       let usersData = this.users[i];
       if (
         usersData.value.name.indexOf(this.keyword) !== -1 &&
-        usersData.value.Floor.indexOf(this.floorKeyword) !== -1 &&
+        (parseInt(String(usersData.value.number / 1000)) + "F").indexOf(
+          this.floorKeyword
+        ) !== -1 &&
         usersData.value.careLevel.indexOf(this.serchCareLevelKeyword) !== -1
       ) {
         usersArray.push(usersData);
@@ -155,15 +157,20 @@ export default class users extends Mixins(MixinLogger) {
     firestore
       .collection("users")
       .where("checkRecordDay", "not-in", [this.today])
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          obj[doc.id] = { value: doc.data() };
-        });
-        this.users = obj;
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            obj[doc.id] = { value: doc.data() };
+          });
+          this.users = obj;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 }
 </script>
