@@ -30,6 +30,9 @@ export default class mixinLogger extends Vue {
   keyword = "";
   staffID = ""; //staffのID(authで登録したランダムなuid)
 
+  archivesDb = firestore.collection("archives");
+  staffsDb = firestore.collection("staffs").doc("staff");
+
   //Users.
   name = "";
   birthday = "";
@@ -84,11 +87,26 @@ export default class mixinLogger extends Vue {
     this.uidCreate();
   }
 
+  //各componentで使用するgetでfirestoreより得た値を日付順(降順)に並び替え、this.dataArraysに入れる
+  dataArrays: string[] = [];
+
+  sortArray(array: string[]) {
+    //日付順に並び替える
+    this.dataArrays = array
+      .slice()
+      .sort((a: any | string, b: any | string) => {
+        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
+      })
+      .reverse();
+  }
+
+  //<---- ログイン処理 ---->
   mounted() {
     firebase.auth().onAuthStateChanged((staff) => {
       if (staff) {
         this.authentication = true;
         this.staffID = staff.uid;
+        console.log(this.staffID);
         this.staffNameSeek(this.staffID);
       } else {
         this.authentication = false;
@@ -109,26 +127,28 @@ export default class mixinLogger extends Vue {
     firestore
       .collection("users")
       .orderBy("number")
-      .onSnapshot((querySnapshot) => {
-        const obj: {
-          [key: string]: { value: firebase.firestore.DocumentData };
-        } = {};
-        querySnapshot.forEach((doc) => {
-          //querySnapshotが現在の全体のデータ
-          obj[doc.id] = { value: doc.data() };
-          //doc.idはランダムな文字列のid
-        });
-        this.users = obj;
-      });
+      .onSnapshot(
+        (querySnapshot) => {
+          const obj: {
+            [key: string]: { value: firebase.firestore.DocumentData };
+          } = {};
+          querySnapshot.forEach((doc) => {
+            //querySnapshotが現在の全体のデータ
+            obj[doc.id] = { value: doc.data() };
+            //doc.idはランダムな文字列のid
+          });
+          this.users = obj;
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
   }
 
   staffNameSeek(staffID: string) {
     //ログインしているstaffの名前を取得する
-    firestore
-      .collection("staffs")
-      .doc("staff")
-      .collection(staffID)
-      .onSnapshot((querySnapshot) => {
+    this.staffsDb.collection(staffID).onSnapshot(
+      (querySnapshot) => {
         const obj: {
           [key: string]: { value: firebase.firestore.DocumentData };
         } = {};
@@ -138,9 +158,11 @@ export default class mixinLogger extends Vue {
         });
         this.staffs = obj;
         this.displayStaffName = obj[staffID].value.staffName;
-        // console.log(displayNameData)
-        // console.log(this.displayStaffName)
-      });
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
   }
 
   signUp() {
@@ -155,15 +177,13 @@ export default class mixinLogger extends Vue {
   }
 
   staffNameAdd(staffID: string) {
-    firestore
-      .collection("staffs")
-      .doc("staff")
+    this.staffsDb
       .collection(staffID)
       .doc(staffID)
       .set({
         staffName: this.staffName,
         email: this.email,
-        password: this.password,
+        password: this.password, //パスワードの登録は確認用。実際は登録しなくても良い。
       })
       .then(() => {
         this.staffDepartment(staffID);
@@ -171,9 +191,7 @@ export default class mixinLogger extends Vue {
   }
 
   staffDepartment(staffID: string) {
-    firestore
-      .collection("staffs")
-      .doc("staff")
+    this.staffsDb
       .collection(this.department)
       .doc(staffID)
       .set({
@@ -192,43 +210,49 @@ export default class mixinLogger extends Vue {
       .then(() => this.$router.push("/users"));
   }
 
+  logOut() {
+    console.log("ログアウト");
+    auth.signOut().then(() => {
+      this.$router.push("/users"), (this.email = ""), (this.password = "");
+    });
+  }
+  //<-------->
+
   //<---- ページネーション処理 ---->
   currentPage = 0; // 現在のページ番号
   size = 10; // 1ページに表示するアイテムの上限
-  pageRange = 10; // ページネーションに表示するページ数の上限
+  pageRange = 6; // ページネーションに表示するページ数の上限
   items: string[] | number[] = []; // 表示するアイテムリスト
   head!: number;
   arrayData: string[] | number[] | any = [];
   half = 0;
 
   //ページ数を取得する
-  //@return {number} 総ページ数(1はじまり)
   get pages() {
     return Math.ceil(this.items.length / this.size);
   }
 
   // ページネーションで表示するページ番号の範囲を取得する
-  // @return {Array<number>} ページ番号の配列
   get displayPageRange() {
-    this.pageRange = this.pages;
     this.half = Math.ceil(this.pageRange / 2);
-    let start;
-    let end;
+
+    let start: number;
+    let end: number;
 
     if (this.pages < this.pageRange) {
-      // ページネーションのrangeよりページ数がすくない場合
+      // ページネーションに表示する上限よりページ数がすくない場合
       start = 1;
       end = this.pages;
     } else if (this.currentPage < this.half) {
-      // 左端のページ番号が1になったとき
+      //前半3ページ
       start = 1;
       end = start + this.pageRange - 1;
-    } else if (this.pages - this.half < this.currentPage) {
-      // 右端のページ番号が総ページ数になったとき
+    } else if (this.pages - this.half - 1 < this.currentPage) {
+      //後半3ページ
       end = this.pages;
       start = end - this.pageRange + 1;
     } else {
-      // activeページを中央にする
+      //現在のページを真ん中に表示
       start = this.currentPage - this.half + 1;
       end = this.currentPage + this.half;
     }
@@ -240,46 +264,21 @@ export default class mixinLogger extends Vue {
     return indexes;
   }
 
-  dataArrays: string[] = [];
-
-  sortArray(array: string[]) {
-    //日付順に並び替える
-    this.dataArrays = array
-      .slice()
-      .sort((a: any | string, b: any | string) => {
-        return Number(new Date(a.value.day)) - Number(new Date(b.value.day));
-      })
-      .reverse();
-  }
-
   // 現在のページで表示するアイテムリストを取得する
-  // @return {any} 表示用アイテムリスト
   displayItems(array: string[] | number[]) {
     this.head = this.currentPage * this.size;
-    // this.arrayData = arry
     this.items = array;
     this.arrayData = array.slice(this.head, this.head + this.size); //0 ~ 10までの配列を表示させる
   }
 
-  // 現在のページかどうか判定する
-  // @param {number} page ページ番号
-  // @return{boolean} 現在のページならtrue
-  // isSelected (page: number) {
-  //     if(page - 1 !== this.currentPage) {
-  //         this.k = page - 1
-  //     }
-  // }
-
   //ページ先頭に移動する
   first() {
     this.currentPage = 0;
-    //this.selectHandler();
   }
 
-  //ページ後尾に移動する
+  //ページ最後に移動する
   last() {
     this.currentPage = this.pages - 1;
-    //this.selectHandler();
   }
 
   //1ページ前に移動する
@@ -287,7 +286,6 @@ export default class mixinLogger extends Vue {
   prev() {
     if (0 < this.currentPage) {
       this.currentPage--;
-      //this.selectHandler();
     }
   }
 
@@ -295,18 +293,12 @@ export default class mixinLogger extends Vue {
   next() {
     if (this.currentPage < this.pages - 1) {
       this.currentPage++;
-      //this.selectHandler();
     }
   }
 
   //指定したページに移動する
-  //@param {number} index ページ番号
   pageSelect(index: number) {
     this.currentPage = index - 1;
-    //this.selectHandler();
   }
-
-  //ページを変更した時の処理
-  //selectHandler () {}
   //<-------->
 }

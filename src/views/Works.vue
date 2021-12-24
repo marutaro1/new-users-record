@@ -78,9 +78,7 @@ import MixinLogger from "./mixin";
 import { Mixins, Prop } from "vue-property-decorator";
 
 export default class works extends Mixins(MixinLogger) {
-  @Prop() id!: number;
   @Prop() department!: string;
-  @Prop() userID!: string;
   @Prop() dailyWorkAllData!: string;
   @Prop() departmentWorks!: string;
   @Prop() today!: string;

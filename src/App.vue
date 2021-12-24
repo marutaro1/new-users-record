@@ -74,18 +74,7 @@ import { auth } from "./firebase/firebase";
 import MixinLogger from "./views/mixin";
 import { Mixins } from "vue-property-decorator";
 
-export default class app extends Mixins(MixinLogger) {
-  logOut() {
-    console.log("ログアウト");
-    auth.signOut().then(() => this.$router.push("/users"));
-  }
-
-  doLogin() {
-    auth
-      .signInWithEmailAndPassword(this.email, this.password)
-      .then(() => this.$router.push("/users"));
-  }
-}
+export default class app extends Mixins(MixinLogger) {}
 </script>
 <style>
 .scroll {
