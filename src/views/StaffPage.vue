@@ -123,6 +123,9 @@ export default class staffPage extends Mixins(MixinLogger) {
     }
   }
   addWorkCheckChange(staffName: string) {
+    if (this.staffMemo === null) {
+      this.staffMemo = "";
+    }
     firestore
       .collection("staffs")
       .doc("staff")
