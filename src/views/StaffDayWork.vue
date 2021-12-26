@@ -357,6 +357,15 @@ export default class staffdaywork extends Mixins(MixinLogger) {
           console.log(
             this.dailyWorkAllData[this.today].value.checkStaffsPost.length
           );
+          const workArray = [];
+          for (
+            let n = 0;
+            n <=
+            this.dailyWorkAllData[this.today].value.checkStaffsPost.work.length;
+            n++
+          ) {
+            workArray.push("");
+          }
           let i = 0;
           while (
             i <
