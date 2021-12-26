@@ -33,7 +33,7 @@ export default class mixinLogger extends Vue {
   archivesDb = firestore.collection("archives");
   staffsDb = firestore.collection("staffs").doc("staff");
 
-  //Users.
+  //Users.vue
   name = "";
   birthday = "";
   careLevel = "";
@@ -76,8 +76,13 @@ export default class mixinLogger extends Vue {
   password = ""; //入力したパスワードを格納する値
   authentication = false;
   displayStaffName = "";
+  changeIdEmailValue = false; //IDで登録するかemailで登録するかを切り替える値
+  loginId = ""; //IDログインで使用するID
+  idPassword = ""; //IDログインで使用するoassword
 
   staffOfficialPosition = ""; //ログインしたstaffのoffitialPositionを格納する値
+  //App.vue
+  idLoginView = false; //IDログインかpasswordログインかを切り替えるための値
 
   uidCreate() {
     this.$_uid = Math.floor(Math.random() * 1000);
@@ -104,9 +109,9 @@ export default class mixinLogger extends Vue {
   mounted() {
     firebase.auth().onAuthStateChanged((staff) => {
       if (staff) {
+        this.idLoginView = false; //idLoginViewを元の値に戻す
         this.authentication = true;
         this.staffID = staff.uid;
-        console.log(this.staffID);
         this.staffNameSeek(this.staffID);
       } else {
         this.authentication = false;
@@ -115,14 +120,6 @@ export default class mixinLogger extends Vue {
   }
 
   getUsers() {
-    interface ISomeObject {
-      Floor: string;
-      birthday: string;
-      careLevel: string;
-      checkRecordDay: string;
-      name: string;
-      number: number;
-    }
     this.changeValue = false;
     firestore
       .collection("users")
@@ -140,7 +137,8 @@ export default class mixinLogger extends Vue {
           this.users = obj;
         },
         (error) => {
-          console.log(error.message);
+          const errorData = error;
+          //ログイン後errorでconsoleが埋まるため、それの対処
         }
       );
   }
@@ -160,7 +158,8 @@ export default class mixinLogger extends Vue {
         this.displayStaffName = obj[staffID].value.staffName;
       },
       (error) => {
-        console.log(error.message);
+        const errorData = error;
+        //ログイン後errorでconsoleが埋まるため、それの対処
       }
     );
   }
@@ -213,7 +212,11 @@ export default class mixinLogger extends Vue {
   logOut() {
     console.log("ログアウト");
     auth.signOut().then(() => {
-      this.$router.push("/users"), (this.email = ""), (this.password = "");
+      this.$router.push("/users"),
+        (this.email = ""),
+        (this.password = ""),
+        (this.loginId = ""),
+        (this.idPassword = "");
     });
   }
   //<-------->

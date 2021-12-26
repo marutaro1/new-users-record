@@ -36,31 +36,68 @@
 
       <br />
 
-      <label class="col-4 col-form-label">Eメール:</label>
-      <div class="col-7 col-lg-3">
-        <input
-          type="text"
-          v-model="email"
-          class="form-control"
-          placeholder="Eメール"
-        />
+      <div v-if="!changeIdEmailValue">
+        <div class="mb-2">
+          <button @click="changeIdEmail" class="btn btn-warning col-3 col-lg-1">
+            ID登録
+          </button>
+        </div>
+        <label class="col-4 col-form-label">Eメール:</label>
+        <div class="col-7 col-lg-3">
+          <input
+            type="text"
+            v-model="email"
+            class="form-control"
+            placeholder="Eメール"
+          />
+        </div>
+
+        <br />
+
+        <label class="col-4 col-form-label">パスワード:</label>
+        <div class="col-7 col-lg-3 mb-3">
+          <input
+            type="text"
+            v-model="password"
+            class="form-control"
+            placeholder="パスワード"
+          />
+        </div>
+        <br />
+        <button @click="signUp" class="btn btn-primary">登録</button>
       </div>
 
-      <br />
+      <div v-else>
+        <div class="mb-2">
+          <button @click="changeIdEmail" class="btn btn-warning col-5 col-lg-1">
+            Eメール登録
+          </button>
+        </div>
+        <label class="col-4 col-form-label">ID:</label>
+        <div class="col-7 col-lg-3">
+          <input
+            type="text"
+            v-model="loginId"
+            class="form-control"
+            placeholder="ID"
+          />
+          <p>@test.com</p>
+        </div>
 
-      <label class="col-4 col-form-label">パスワード:</label>
-      <div class="col-7 col-lg-3 mb-3">
-        <input
-          type="text"
-          v-model="password"
-          class="form-control"
-          placeholder="パスワード"
-        />
+        <label class="col-4 col-form-label">パスワード:</label>
+        <div class="col-7 col-lg-3 mb-3">
+          <input
+            type="text"
+            v-model="idPassword"
+            class="form-control"
+            placeholder="パスワード"
+          />
+          <p>pass</p>
+        </div>
+        <br />
+
+        <button @click="signUpIdChange" class="btn btn-primary">登録</button>
       </div>
-
-      <br />
-
-      <button @click="signUp" class="btn btn-primary">登録</button>
     </div>
   </div>
 </template>
@@ -70,5 +107,17 @@ import { firestore, auth } from "../firebase/firebase";
 import MixinLogger from "./mixin";
 import { Mixins } from "vue-property-decorator";
 
-export default class signup extends Mixins(MixinLogger) {}
+export default class signup extends Mixins(MixinLogger) {
+  changeIdEmail() {
+    this.changeIdEmailValue = !this.changeIdEmailValue;
+  }
+
+  signUpIdChange() {
+    if (this.loginId !== "" && this.idPassword !== "") {
+      this.email = this.loginId + "@test.com";
+      this.password = this.idPassword + "pass";
+    }
+    this.signUp();
+  }
+}
 </script>

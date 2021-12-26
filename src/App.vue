@@ -32,7 +32,7 @@
       </div>
       <router-view></router-view>
     </div>
-    <div v-else style="margin-top: 20%">
+    <div v-else-if="!idLoginView" style="margin-top: 20%">
       <h2 class="text-center text-black-50">Users-Record</h2>
 
       <div class="text-center">
@@ -64,6 +64,50 @@
             ログイン
           </button>
         </div>
+        <div class="col-12 mt-4 mx-auto">
+          <button @click="loginChange" class="btn btn-warning col-6 col-lg-2">
+            IDログインへ切り替え
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="idLoginView" style="margin-top: 20%">
+      <h2 class="text-center text-black-50">Users-Record</h2>
+
+      <div class="text-center">
+        <img src="./assets/users-record-logo.png" class="col-2 col-lg-1 mb-1" />
+      </div>
+      <div class="text-center">
+        <label class="col-5 col-form-label">ID</label>
+        <div class="col-6 col-lg-3 mx-auto">
+          <input
+            type="text"
+            v-model="loginId"
+            class="form-control"
+            placeholder="ID"
+          />
+        </div>
+
+        <label class="col-5 col-form-label">パスワード</label>
+        <div class="col-6 col-lg-3 mx-auto">
+          <input
+            type="text"
+            v-model="idPassword"
+            class="form-control"
+            placeholder="パスワード"
+          />
+        </div>
+        <div class="col-12 mt-4 mx-auto">
+          <button @click="loginIdChange" class="btn btn-primary col-5 col-lg-2">
+            ログイン
+          </button>
+          <div class="col-12 mt-4 mx-auto">
+            <button @click="loginChange" class="btn btn-warning col-8 col-lg-2">
+              Eメールログインへ切り替え
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -74,7 +118,20 @@ import { auth } from "./firebase/firebase";
 import MixinLogger from "./views/mixin";
 import { Mixins } from "vue-property-decorator";
 
-export default class app extends Mixins(MixinLogger) {}
+export default class app extends Mixins(MixinLogger) {
+  loginChange() {
+    //idloginViewを切り替え、ログイン方法を変える
+    this.idLoginView = !this.idLoginView;
+  }
+
+  loginIdChange() {
+    if (this.loginId !== "" && this.idPassword !== "") {
+      this.email = this.loginId + "@test.com";
+      this.password = this.idPassword + "pass";
+    }
+    this.doLogin();
+  }
+}
 </script>
 <style>
 .scroll {
