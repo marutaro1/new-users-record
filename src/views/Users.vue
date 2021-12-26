@@ -135,9 +135,7 @@ export default class users extends Mixins(MixinLogger) {
       let usersData = this.users[i];
       if (
         usersData.value.name.indexOf(this.keyword) !== -1 &&
-        (parseInt(String(usersData.value.number / 1000)) + "F").indexOf(
-          this.floorKeyword
-        ) !== -1 &&
+        usersData.value.Floor.indexOf(this.floorKeyword) !== -1 &&
         usersData.value.careLevel.indexOf(this.serchCareLevelKeyword) !== -1
       ) {
         usersArray.push(usersData);
