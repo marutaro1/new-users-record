@@ -1,5 +1,9 @@
 <template>
   <div @mousemove.once="getManuelData" class="mt-2">
+    <div class="text-center">
+      <p>年齢: {{ ageData }}</p>
+    </div>
+    <hr />
     <h4>マニュアル</h4>
     <div class="col-12">
       <label class="col-4 col-form-label">タイトル:</label>
@@ -102,6 +106,7 @@ import { Mixins, Prop } from "vue-property-decorator";
 export default class manuel extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
+  @Prop() birthday!: string;
 
   manuelsDb = firestore
     .collection("users")
@@ -127,7 +132,14 @@ export default class manuel extends Mixins(MixinLogger) {
     return manuels;
   }
 
+  created() {
+    this.getAge(this.birthday);
+  }
+
   addManuelData() {
+    if (this.manuelTitle == "" || this.manuel == "") {
+      return alert("タイトル、もしくは新規マニュアルを入力してください。");
+    }
     this.manuelsDb
       .doc(String(this.$_uid))
       .set({
@@ -143,6 +155,9 @@ export default class manuel extends Mixins(MixinLogger) {
   }
 
   updateManuelData(uid: string) {
+    if (this.updateManuelTitle == "" || this.updateManuel == "") {
+      return alert("更新タイトル、もしくは更新マニュアルを入力してください。");
+    }
     this.manuelsDb
       .doc(String(uid))
       .update({

@@ -1,5 +1,9 @@
 <template>
   <div class="mt-2">
+    <div class="text-center">
+      <p>年齢: {{ ageData }}</p>
+    </div>
+    <hr />
     <h4>利用者情報更新</h4>
 
     <label class="col-4 col-form-label">部屋番号:</label>
@@ -50,12 +54,24 @@ export default class updateuser extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
   @Prop() userName!: string;
+  @Prop() birthday!: string;
 
   updateCareLevel = "";
   updateNumber = "";
   updateRoomCheck = "";
 
+  created() {
+    this.getAge(this.birthday);
+  }
+
   updateUser() {
+    if (
+      this.updateCareLevel === "" ||
+      this.updateNumber === "" ||
+      this.updateRoomCheck === ""
+    ) {
+      return alert("部屋番号, 部屋内番号, 要介護度を入力してください");
+    }
     //user情報を更新するメソッド
     firestore
       .collection("users")
@@ -66,7 +82,7 @@ export default class updateuser extends Mixins(MixinLogger) {
         Floor: parseInt(String(Number(this.updateNumber) / 100)) + "F",
       })
       .then(() => {
-        alert.log("登録しました。");
+        alert("登録しました");
         this.$router.push(
           "/users/user/" +
             Number(this.updateNumber + this.updateRoomCheck) +

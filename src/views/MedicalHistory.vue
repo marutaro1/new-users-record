@@ -1,5 +1,9 @@
 <template>
   <div @mousemove.once="getMedicalHistoryData" class="mt-2">
+    <div class="text-center">
+      <p>年齢: {{ ageData }}</p>
+    </div>
+    <hr />
     <h4>既往歴</h4>
 
     <div>
@@ -125,6 +129,7 @@ import { Mixins, Prop } from "vue-property-decorator";
 export default class records extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
+  @Prop() birthday!: string;
 
   medicalHistorysDb = firestore
     .collection("users")
@@ -148,23 +153,32 @@ export default class records extends Mixins(MixinLogger) {
     return historys;
   }
 
+  created() {
+    this.getAge(this.birthday);
+  }
+
   addMedicalHistoryData() {
+    if (this.today == "" || this.medicalHistory == "") {
+      return alert("日付、もしくは既往歴を入力してください。");
+    }
     this.medicalHistorysDb
       .doc(String(this.$_uid))
       .set({
         day: this.today,
-        searchDay: this.day.slice(0, 10), //検索用の値 YYYY-MM-DDで登録
+        searchDay: this.today.slice(0, 10), //検索用の値 YYYY-MM-DDで登録
         history: this.medicalHistory,
         historyID: this.$_uid,
       })
       .then(() => {
-        this.day = "";
         this.medicalHistory = "";
         this.uidCreate();
       });
   }
 
   updateMedicalHistoryData(uid: string) {
+    if (this.updateDay == "" || this.updateMedicalHistory == "") {
+      return alert("日付、もしくは更新する既往歴を入力してください。");
+    }
     this.medicalHistorysDb
       .doc(String(uid))
       .update({

@@ -40,6 +40,16 @@ export default class mixinLogger extends Vue {
   number = "";
   roomCheck = "";
 
+  //<---- User.vue の子component ---->
+  ageData = 0;
+  getAge(dayValue: string) {
+    const ageTime = Date.now() - new Date(dayValue).getTime();
+    const ageDate = new Date(ageTime);
+    this.ageData = ageDate.getUTCFullYear() - 1970;
+    return this.ageData;
+  }
+  //<-------->
+
   //Record.vue
   userRecordObj: { [key: string]: any } = {}; //取得した記録の情報を入れ込むアブジェクト
   record = ""; //入力した記録を格納する値
@@ -165,6 +175,9 @@ export default class mixinLogger extends Vue {
   }
 
   signUp() {
+    if (this.email == "" || this.password == "") {
+      return alert("全て入力してください。");
+    }
     auth
       .createUserWithEmailAndPassword(this.email, this.password)
       .then((res) => {

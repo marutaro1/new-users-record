@@ -2,17 +2,7 @@
   <div class="mt-2 mx-3">
     <h3>利用者個人ページ</h3>
     <div v-for="(user, key) in userProfileView" :key="key">
-      <div class="text-center" @mousemove.once="ages(user[1].value.birthday)">
-        <p>名前: {{ user[1].value.name }}</p>
-        <p>部屋番号: {{ parseInt(user[1].value.number / 10) }}</p>
-        <p>要介護度: {{ user[1].value.careLevel }}</p>
-        <p>生年月日: {{ user[1].value.birthday }}</p>
-        <p>
-          年齢:
-          <template v-if="ageData !== 0">{{ ageData }}</template>
-        </p>
-
-        <hr />
+      <div class="text-center">
         <router-link
           :to="'/users/user/' + user[1].value.number + '/records'"
           class="btn btn-primary px-2 col-lg-2"
@@ -38,10 +28,17 @@
           class="btn btn-primary px-2 col-lg-2"
           >処置</router-link
         >
+        <hr />
+
+        <p>名前: {{ user[1].value.name }}</p>
+        <p>部屋番号: {{ parseInt(user[1].value.number / 10) }}</p>
+        <p>要介護度: {{ user[1].value.careLevel }}</p>
+        <p>生年月日: {{ user[1].value.birthday }}</p>
       </div>
       <router-view
         :userID="user[0]"
         :userName="user[1].value.name"
+        :birthday="user[1].value.birthday"
       ></router-view>
     </div>
   </div>
@@ -55,7 +52,6 @@ import { Mixins, Prop } from "vue-property-decorator";
 
 export default class user extends Mixins(MixinLogger) {
   @Prop() id!: number;
-  ageData = 0;
 
   get userProfileView() {
     this.getUsers();
@@ -66,12 +62,6 @@ export default class user extends Mixins(MixinLogger) {
       }
     });
     return result;
-  }
-
-  ages(a: string) {
-    const ageTime = Date.now() - new Date(a).getTime();
-    const ageDate = new Date(ageTime);
-    this.ageData = ageDate.getUTCFullYear() - 1970;
   }
 }
 </script>

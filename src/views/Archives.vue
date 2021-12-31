@@ -160,6 +160,9 @@ export default class archives extends Mixins(MixinLogger) {
   }
 
   updateArchiveData(userID: string, day: string) {
+    if (this.updateArchive == "") {
+      return alert("更新データを入力してください。");
+    }
     this.archivesDb
       .doc(day)
       .collection("archive")
@@ -198,7 +201,7 @@ export default class archives extends Mixins(MixinLogger) {
           memo: "",
         });
     }
-    alert(this.today + "の記録まとめにコピーしました");
+    alert(this.today + "の記録まとめにコピーしました。");
   }
 
   addArchiveMemo(

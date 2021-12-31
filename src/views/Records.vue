@@ -1,5 +1,9 @@
 <template>
   <div @mousemove.once="getUserRecord(dayData)" class="mt-2">
+    <div class="text-center">
+      <p>年齢: {{ ageData }}</p>
+    </div>
+    <hr />
     <h4>記録</h4>
     <div>
       <label class="col-4 col-form-label mb-1">新規記録入力:</label>
@@ -36,7 +40,7 @@
         @click="getUserRecord(selectDayValue)"
         class="btn btn-primary px-1"
       >
-        月分表示
+        {{ selectDayValue }}月分表示
       </button>
     </div>
 
@@ -150,6 +154,7 @@ export default class records extends Mixins(MixinLogger) {
   @Prop() id!: number;
   @Prop() userID!: string;
   @Prop() userName!: string;
+  @Prop() birthday!: string;
 
   pagination = {};
   dayDataValue = "";
@@ -175,7 +180,14 @@ export default class records extends Mixins(MixinLogger) {
     return userRecords;
   }
 
+  created() {
+    this.getAge(this.birthday);
+  }
+
   addUserRecord() {
+    if (this.day == "" || this.record == "" || this.displayStaffName == "") {
+      return alert("日付、新規記録を入力してください。");
+    }
     this.recordsDb
       .doc(String(this.$_uid))
       .set({
@@ -213,6 +225,13 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   updateUserRecord(uid: string) {
+    if (
+      this.updateDay == "" ||
+      this.updateRecord == "" ||
+      this.displayStaffName == ""
+    ) {
+      return alert("日付、更新記録を入力してください。");
+    }
     this.recordsDb
       .doc(String(uid))
       .update({
@@ -257,8 +276,11 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   getUserRecord(dayValue: string) {
+    if (dayValue == "") {
+      return alert("期間を入力してください。");
+    }
     const startDay = dayValue + "-01";
-    const endDay = dayValue + "-31";
+    const endDay = dayValue + "-32";
     this.recordsDb
       .where("day", ">=", startDay)
       .where("day", "<=", endDay)
@@ -280,6 +302,9 @@ export default class records extends Mixins(MixinLogger) {
   }
 
   getMonthsRecord() {
+    if (this.dayKeywordFirst == "" || this.dayKeywordSecond == "") {
+      return alert("期間を入力してください。");
+    }
     this.recordsDb
       .where("searchDay", ">=", this.dayKeywordFirst)
       .where("searchDay", "<=", this.dayKeywordSecond)
