@@ -62,6 +62,15 @@ import { Mixins, Prop } from "vue-property-decorator";
 
 export default class about extends Mixins(MixinLogger) {
   addUsers() {
+    if (
+      this.name == "" ||
+      this.birthday == "" ||
+      this.careLevel == "" ||
+      this.number == "" ||
+      this.roomCheck == ""
+    ) {
+      return alert("全ての項目を入力してください。");
+    }
     //userを登録するメソッド
     firestore
       .collection("users")

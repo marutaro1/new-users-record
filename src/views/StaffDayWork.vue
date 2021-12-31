@@ -75,6 +75,7 @@
               v-model="staff.staffName"
               class="form-select form-select-sm"
             >
+              <option value="">選択してください</option>
               <option
                 v-for="(name, key) in staffDatas"
                 :key="key"
@@ -104,7 +105,7 @@
           </div>
         </div>
         <div>
-          <label class="col-5 col-form-label">{{ today }}:業務</label>
+          <label class="col-5 col-form-label">{{ today }} 業務選択:</label>
           <div class="col-4 col-lg-3">
             <select
               v-model="staff.work"
@@ -229,7 +230,7 @@ export default class staffdaywork extends Mixins(MixinLogger) {
   staffDataGet() {
     //staff達のデータを取得するメソッド
     this.pathStaffDayWorkView();
-    if (this.today === "" || this.departmentWorks === "") {
+    if (this.today == "" || this.departmentWorks == "") {
       return;
     }
     firestore
@@ -294,6 +295,13 @@ export default class staffdaywork extends Mixins(MixinLogger) {
       );
   }
   addAllDailyWork() {
+    console.log(this.checkStaffsPost);
+    if (
+      this.checkStaffsPost[0].staffName == "" ||
+      this.checkStaffsPost[0].phs == ""
+    ) {
+      return alert("入力してください。");
+    }
     //書き出したstaffのname/phs/workを、staffsのdocument→部署ごとのcollection→業務を行う日付のdocument内に登録する
     firestore
       .collection("staffs")
@@ -476,6 +484,12 @@ export default class staffdaywork extends Mixins(MixinLogger) {
 
   addStaffData() {
     //登録するためのstaffのデータを追加するためのメソッド
+    if (
+      this.checkStaffsPost[this.checkStaffsPost.length - 1].staffName == "" ||
+      this.checkStaffsPost[this.checkStaffsPost.length - 1].phs == ""
+    ) {
+      return alert("職員名、PHS番号を入力してください。");
+    }
     this.checkStaffsPost.push(this.independentObject());
   }
   removeStaffData(target: number) {
