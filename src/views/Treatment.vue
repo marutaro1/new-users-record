@@ -10,7 +10,7 @@
       <p>年齢: {{ ageData }}</p>
     </div>
     <hr />
-    <h4>処置一覧</h4>
+    <h4>処置</h4>
     <div v-if="defaultBoolean">
       <button @click="inversionBoolean" class="btn btn-warning m-0 py-0 px-1">
         閉じる
@@ -150,6 +150,16 @@
           {{ n.value.treatment }}
         </option>
       </datalist>
+    </div>
+
+    <div v-if="!!dayKeywordFirst && !!dayKeywordSecond">
+      <h5>{{ dayKeywordFirst }}から{{ dayKeywordSecond }}までの処置記録</h5>
+    </div>
+    <div v-else-if="!selectDayValue">
+      <h5>{{ dayData }}月の処置記録</h5>
+    </div>
+    <div v-else>
+      <h5>{{ selectDayValue }}月の処置記録</h5>
     </div>
 
     <div class="scroll">
