@@ -1,5 +1,20 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Home from "../views/Home.vue";
+const Archive = () => import("../views/Archives.vue");
+const Manuel = () => import("../views/Manuel.vue");
+const MedicalHistory = () => import("../views/MedicalHistory.vue");
+const NewUser = () => import("../views/NewUser.vue");
+const Records = () => import("../views/Records.vue");
+const RecordTestCode = () => import("../views/RecordTestCode.vue");
+const SignUp = () => import("../views/SignUp.vue");
+const Staff = () => import("../views/Staff.vue");
+const StaffDayWork = () => import("../views/StaffDayWork.vue");
+const StaffPage = () => import("../views/StaffPage.vue");
+const Treatment = () => import("../views/Treatment.vue");
+const Updateuser = () => import("../views/UpdateUser.vue");
+const User = () => import("../views/User.vue");
+const Users = () => import("../views/Users.vue");
+const Works = () => import("../views/Works.vue");
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -12,8 +27,7 @@ const routes: Array<RouteRecordRaw> = [
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "newuser" */ "../views/NewUser.vue"),
+    component: NewUser,
   },
   {
     path: "/users",
@@ -21,8 +35,7 @@ const routes: Array<RouteRecordRaw> = [
     // route level code-splitting
     // this generates a separate chunk (users.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "users" */ "../views/Users.vue"),
+    component: Users,
   },
   {
     path: "/users/user/:id",
@@ -31,7 +44,7 @@ const routes: Array<RouteRecordRaw> = [
     // route level code-splitting
     // this generates a separate chunk (user.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "user" */ "../views/User.vue"),
+    component: User,
     children: [
       {
         path: "/users/user/:id/records",
@@ -40,8 +53,16 @@ const routes: Array<RouteRecordRaw> = [
         // route level code-splitting
         // this generates a separate chunk (user.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () =>
-          import(/* webpackChunkName: "records" */ "../views/Records.vue"),
+        component: Records,
+      },
+      {
+        path: "/users/user/:id/recordtest",
+        name: "RecordTest",
+        props: true,
+        // route level code-splitting
+        // this generates a separate chunk (user.[hash].js) for this route
+        // which is lazy-loaded when the route is visited.
+        component: RecordTestCode,
       },
       {
         path: "/users/user/:id/updateuser",
@@ -74,7 +95,7 @@ const routes: Array<RouteRecordRaw> = [
         // which is lazy-loaded when the route is visited.
         component: () =>
           import(
-            /* webpackChunkName: " *MedicalHistory" */ "../views/MedicalHistory.vue"
+            /* webpackChunkName: "MedicalHistory" */ "../views/MedicalHistory.vue"
           ),
       },
       {
@@ -85,9 +106,7 @@ const routes: Array<RouteRecordRaw> = [
         // this generates a separate chunk (user.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () =>
-          import(
-            /* webpackChunkName: " *Treatment" */ "../views/Treatment.vue"
-          ),
+          import(/* webpackChunkName: "Treatment" */ "../views/Treatment.vue"),
       },
     ],
   },
@@ -99,7 +118,7 @@ const routes: Array<RouteRecordRaw> = [
     // this generates a separate chunk (user.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () =>
-      import(/* webpackChunkName: " *Archives" */ "../views/Archives.vue"),
+      import(/* webpackChunkName: "Archives" */ "../views/Archives.vue"),
   },
   {
     path: "/staff",
